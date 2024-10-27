@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"github.com/NesterovYehor/pastebin/pkg/helpers"
 )
 
 func CreateNewPost(w http.ResponseWriter, r *http.Request) {
@@ -9,4 +10,6 @@ func CreateNewPost(w http.ResponseWriter, r *http.Request) {
 		text string `json: "post_text`
 		data string `json: "date"`
 	}
+
+	err := helper
 }
