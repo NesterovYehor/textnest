@@ -12,6 +12,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2 // indirect
 )
 
+replace github.com/NesterovYehor/TextNest/pkg => ../../pkg
+
+require github.com/NesterovYehor/TextNest/pkg v0.0.0-20241030211018-6cf5f307cfce
+
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.42 // indirect
@@ -26,4 +30,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.3 // indirect
 	github.com/aws/smithy-go v1.22.0 // indirect
+	github.com/joho/godotenv v1.5.1
 )
