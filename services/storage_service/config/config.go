@@ -1,17 +1,17 @@
 package config
 
 import (
-	"flag"
-	"fmt"
+	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	Addr    string
-	Env     string
 	Storage struct {
-		accessKey string
-		secretKey string
+		AccessKey string // Capitalized for visibility
+		SecretKey string // Changed to correct environment variable
 	}
 }
 
@@ -21,20 +21,16 @@ var (
 )
 
 func InitConfig() *Config {
-	cfg := &Config{}
-	flag.StringVar(&cfg.Addr, "port", "4000", "API server port")
-	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
-
-
-	displayVersion := flag.Bool("version", false, "Display version and exit")
-
-	flag.Parse()
-
-	if *displayVersion {
-		fmt.Printf("Service Version:\t%s\n", version)
-		fmt.Printf("Build Time:\t%s\n", buildTime)
-		os.Exit(0)
+	cfg := &Config{} // Initialize cfg
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
 	}
+
+	cfg.Addr = os.Getenv("PORT")
+	cfg.Storage.AccessKey = os.Getenv("AWS_ACCESS_KEY_ID")     // Correct key
+	cfg.Storage.SecretKey = os.Getenv("AWS_SECRET_ACCESS_KEY") // Correct key
 
 	return cfg
 }
+

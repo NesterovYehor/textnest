@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/NesterovYehor/TextNest/pkg"
+	"github.com/NesterovYehor/TextNest/pkg/errors"
+	"github.com/NesterovYehor/TextNest/pkg/helpers"
 )
 
 func StorePaste(w http.ResponseWriter, r *http.Request) {
@@ -12,5 +14,7 @@ func StorePaste(w http.ResponseWriter, r *http.Request) {
 		content string `json: "content"`
 	}
 
-	err := helpers.ReadJson(w, r, &input)
+	err := helpers.ReadJSON(w, r, &input)
+	if err != nil {
+	}
 }

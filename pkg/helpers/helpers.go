@@ -44,3 +44,19 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 
 	return nil
 }
+
+func WriteJSON(w http.ResponseWriter, data any, status int, headers http.Header) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range headers {
+		w.Header()[key] = value
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(jsonData)
+
+	return nil
+}
