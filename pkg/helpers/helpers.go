@@ -8,6 +8,9 @@ import (
 	"net/http"
 )
 
+
+type envelope map[string]any
+
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	maxBytes := 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
@@ -55,8 +58,8 @@ func WriteJSON(w http.ResponseWriter, data any, status int, headers http.Header)
 		w.Header()[key] = value
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(jsonData)
+    w.WriteHeader(status)
+    w.Write(jsonData)
 
-	return nil
+    return nil
 }

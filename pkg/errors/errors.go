@@ -1,15 +1,14 @@
 package errors
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/NesterovYehor/TextNest/pkg/helpers"
 )
 
-type envelope map[string]any
-
 func errorResponse(w http.ResponseWriter, status int, message any) {
-	env := envelope{
+	env := helpers.Envelope{
 		"error": message,
 	}
 
@@ -21,4 +20,15 @@ func errorResponse(w http.ResponseWriter, status int, message any) {
 
 func BadRequestResponse(w http.ResponseWriter, status int, err error) {
 	errorResponse(w, status, err.Error())
+}
+
+func UploadContent(w http.ResponseWriter) {
+	message := fmt.Sprintln("failed to upload content to S3")
+	errorResponse(w, http.StatusServiceUnavailable, message)
+}
+
+func ServerErrorResponse(w http.ResponseWriter, err error) {
+	message := "the server encountered a problem and could not process your request"
+
+	errorResponse(w, http.StatusServiceUnavailable, message)
 }
