@@ -1,4 +1,4 @@
-package models
+package storage
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NesterovYehor/TextNest/tree/main/services/storage_service/models"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -34,7 +35,7 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 }
 
 // GetPaste retrieves a paste from S3 and decodes it into PasteData
-func (storage *S3Storage) GetPaste(hash string) (*PasteData, error) {
+func (storage *S3Storage) GetPaste(hash string) (*models.PasteData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -48,7 +49,7 @@ func (storage *S3Storage) GetPaste(hash string) (*PasteData, error) {
 	}
 	defer res.Body.Close()
 
-	var paste PasteData
+	var paste models.PasteData
 
 	// Decode the JSON body into PasteData
 	dec := json.NewDecoder(res.Body)
@@ -60,7 +61,7 @@ func (storage *S3Storage) GetPaste(hash string) (*PasteData, error) {
 }
 
 // UploadPaste uploads paste data to S3 and returns the upload location URL
-func (storage *S3Storage) UploadPaste(data *PasteData) (string, error) {
+func (storage *S3Storage) UploadPaste(data *models.PasteData) (string, error) {
 	uploader := manager.NewUploader(storage.S3)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -70,7 +71,7 @@ func (storage *S3Storage) UploadPaste(data *PasteData) (string, error) {
 	res, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: &storage.Bucket,
 		Key:    &data.Hash,
-		Body:   strings.NewReader(data.Text),
+		Body:   strings.NewReader(data.Content),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to upload paste: %w", err)
@@ -94,4 +95,3 @@ func (storage *S3Storage) DeletePaste(hash string) error {
 	}
 	return nil
 }
-

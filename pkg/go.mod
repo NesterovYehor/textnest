@@ -1,3 +1,3 @@
-module github.com/NesterovYehor/pastebin/pkg
+module github.com/NesterovYehor/TextNest/pkg
 
 go 1.23.1

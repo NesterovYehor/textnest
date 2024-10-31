@@ -2,7 +2,8 @@ package handler
 
 import (
 	"net/http"
-	"github.com/NesterovYehor/pastebin/pkg/helpers"
+
+	"github.com/NesterovYehor/TextNest/pkg/helpers"
 )
 
 func CreateNewPost(w http.ResponseWriter, r *http.Request) {
@@ -11,5 +12,5 @@ func CreateNewPost(w http.ResponseWriter, r *http.Request) {
 		data string `json: "date"`
 	}
 
-	err := helper
+	err := helpers.ReadJSON(w, r, input)
 }
