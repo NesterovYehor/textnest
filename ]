@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -28,6 +28,7 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 
 	// Initialize the S3 client
 	s3Client := s3.NewFromConfig(cfg)
+	fmt.Println(cfg.Credentials)
 
 	return &S3Storage{
 		Bucket: bucket,
@@ -35,29 +36,30 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 	}, nil
 }
 
-// GetPaste retrieves a paste from S3 and decodes it into PasteData.
-func (storage *S3Storage) GetPaste(key string) (string, error) {
+// GetPaste retrieves a paste from S3 and decodes it into PasteData
+func (storage *S3Storage) GetPaste(hash string) (*models.PasteData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	// Retrieve the object from S3 using the bucket name
+	// Retrieve the object from S3
 	res, err := storage.S3.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(storage.Bucket), // Use the correct bucket name
-		Key:    aws.String(key),
+		Bucket: aws.String("textnestbuycket"),
+		Key:    &hash,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to load data from storage: %w", err)
+		return nil, fmt.Errorf("failed to load data from storage: %w", err)
 	}
 	defer res.Body.Close()
 
-	// Read the object data
-	pasteContent, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read object data: %w", err)
+	var paste models.PasteData
+
+	// Decode the JSON body into PasteData
+	dec := json.NewDecoder(res.Body)
+	if err := dec.Decode(&paste); err != nil {
+		return nil, fmt.Errorf("failed to decode JSON: %w", err)
 	}
 
-	// Convert the byte slice to a string and return it
-	return string(pasteContent), nil
+	return &paste, nil
 }
 
 // UploadPaste uploads paste data to S3 and returns the upload location URL
@@ -67,12 +69,12 @@ func (storage *S3Storage) UploadPaste(data *models.PasteData) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	fmt.Println(storage.Bucket)
+	fmt.Println(storage.S3.Options().Credentials)
 
 	// Upload the paste data to S3
 	res, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(storage.Bucket),
-		Key:    aws.String(data.Key),
+		Key:    aws.String(data.Hash),
 		Body:   strings.NewReader(data.Content),
 		ACL:    "public-read",
 	})
@@ -84,14 +86,14 @@ func (storage *S3Storage) UploadPaste(data *models.PasteData) (string, error) {
 }
 
 // DeletePaste deletes a paste from S3
-func (storage *S3Storage) DeletePaste(key string) error {
+func (storage *S3Storage) DeletePaste(hash string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	// Delete the object from S3
 	_, err := storage.S3.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(storage.Bucket), // Use the correct bucket name
-		Key:    aws.String(key),
+		Bucket: &storage.Bucket,
+		Key:    &hash,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete paste: %w", err)

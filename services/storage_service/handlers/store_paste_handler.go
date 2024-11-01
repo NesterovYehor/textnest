@@ -10,7 +10,7 @@ import (
 
 func StorePaste(w http.ResponseWriter, r *http.Request, storage models.Storage) {
 	var input struct {
-		Hash    string `json:"hash"`    // Corrected tag
+		Key     string `json:"key"`     // Corrected tag
 		Content string `json:"content"` // Corrected tag
 	}
 
@@ -21,13 +21,13 @@ func StorePaste(w http.ResponseWriter, r *http.Request, storage models.Storage) 
 	}
 
 	data := models.PasteData{
-		Hash:    input.Hash,
+		Key:     input.Key,
 		Content: input.Content,
 	}
 
 	contentPath, err := storage.UploadPaste(&data)
 	if err != nil {
-		errors.UploadContent(w) // Consider adding status code
+		errors.UploadContent(w, err) // Consider adding status code
 		return
 	}
 

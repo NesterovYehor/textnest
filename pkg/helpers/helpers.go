@@ -9,7 +9,7 @@ import (
 )
 
 
-type envelope map[string]any
+type Envelope map[string]any
 
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	maxBytes := 1_048_576
