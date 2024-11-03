@@ -9,12 +9,24 @@ GO_FILES := $(shell find . -name '*.go' -not -path "./vendor/*")
 all: build
 
 # Build the Go project
-build:
-	go build -o bin/server cmd/api/main.go
+.PHONY: build/api
+build/api:
+	@go build services/api_service/cmd/main.go
+
+
+.PHONY: build/storage
+build/storage:
+	@go build services/storage_service/cmd
 
 # Run the Go project
-run: build
-	./bin/server
+.PHONY: run/api
+run/api_sevice:
+	@go run services/api_service/cmd/main.go
+
+# run/api: run the cmd/api application
+.PHONY: run/storage
+run/storage:
+	@go run ./services/storage_service/cmd/main.go
 
 # Run all tests
 test:

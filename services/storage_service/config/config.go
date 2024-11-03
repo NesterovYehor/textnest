@@ -17,11 +17,6 @@ type Config struct {
 	}
 }
 
-var (
-	version   string
-	buildTime string
-)
-
 func InitConfig() *Config {
 	cfg := &Config{} // Initialize cfg
 	err := godotenv.Load()

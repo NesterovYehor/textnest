@@ -9,15 +9,17 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.22 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2 // indirect
 )
 
 replace github.com/NesterovYehor/TextNest/pkg => ../../pkg
 
-require github.com/NesterovYehor/TextNest/pkg v0.0.0-20241030211018-6cf5f307cfce
+require (
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241030211018-6cf5f307cfce
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2
+)
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.32.3 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.32.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.42 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.18 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.35
