@@ -8,7 +8,13 @@ import (
 )
 
 type Config struct {
-	Addr string
+	Addr        string
+	RedisOption struct {
+		Addr     string
+		Password string
+		DB       int
+		Protocol int
+	}
 }
 
 func InitConfig() *Config {
@@ -19,5 +25,6 @@ func InitConfig() *Config {
 	}
 
 	cfg.Addr = os.Getenv("PORT")
+	cfg.RedisOption.Addr = os.Getenv("REDIS_ADDR")
 	return cfg
 }
