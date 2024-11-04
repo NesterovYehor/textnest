@@ -37,3 +37,7 @@ func IncorrectUrlParams(w http.ResponseWriter, param string) {
 	message := fmt.Sprintf("Url doesn't contain required param: %v", param)
 	errorResponse(w, http.StatusBadRequest, message)
 }
+
+func FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	errorResponse(w, http.StatusUnprocessableEntity, errors)
+}

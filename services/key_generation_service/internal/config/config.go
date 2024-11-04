@@ -1,7 +1,14 @@
 package config
 
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
 type Config struct {
-    Addr int
+	Addr string
 }
 
 func InitConfig() *Config {
@@ -12,7 +19,5 @@ func InitConfig() *Config {
 	}
 
 	cfg.Addr = os.Getenv("PORT")
-	cfg.Storage.Bucket = os.Getenv("BUCKET") // Correct key
 	return cfg
 }
-

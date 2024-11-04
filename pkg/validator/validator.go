@@ -19,3 +19,7 @@ func (v *Validator) Check(ok bool, key, msg string) {
 		v.AddErr(key, msg)
 	}
 }
+
+func (v *Validator) Valid() bool {
+	return len(v.Errors) == 0
+}
