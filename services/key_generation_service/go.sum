@@ -1,5 +1,5 @@
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241104181050-92219486c005 h1:zQifYFb0hO0lPs+GZSU3d7ZZmb2bPMx1I7Ndlw+W+WQ=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241104181050-92219486c005/go.mod h1:pLiX5RM2TgJu2NPBxHxk29lgfkfLgNuUEcXvVg3jgCI=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105182431-3f47b025af28 h1:6z5J/AeBgVS7N3mCQyvRzTm3JIVoZuQjdDc//jun8aw=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105182431-3f47b025af28/go.mod h1:pLiX5RM2TgJu2NPBxHxk29lgfkfLgNuUEcXvVg3jgCI=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
