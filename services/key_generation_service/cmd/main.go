@@ -1,21 +1,21 @@
 package main
 
 import (
+	"context"
 	"log"
-
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/config"
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/server"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	cfg := config.InitConfig()
-	srv := server.Server{
-		Config: cfg,
-	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+    config := 
 
 	log.Println("Starting KGS server...")
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
-
