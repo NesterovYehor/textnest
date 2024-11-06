@@ -2,9 +2,10 @@ module github.com/NesterovYehor/TextNest/tree/main/services/key_generation_servi
 
 go 1.23.1
 
-require github.com/joho/godotenv v1.5.1
-
-require github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105182431-3f47b025af28
+require (
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105190841-8e366417e83a
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

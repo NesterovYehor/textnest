@@ -4,11 +4,12 @@ import (
 	"log"
 	"os"
 
+	httpserver "github.com/NesterovYehor/TextNest/pkg/http"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Addr        string
+	Grpc        *httpserver.Config
 	RedisOption struct {
 		Addr     string
 		Password string
@@ -24,7 +25,8 @@ func InitConfig() *Config {
 		log.Fatal("Error loading .env file")
 	}
 
-	cfg.Addr = os.Getenv("PORT")
+	port := os.Getenv("PORT")
 	cfg.RedisOption.Addr = os.Getenv("REDIS_ADDR")
+	cfg.Grpc = grpc
 	return cfg
 }

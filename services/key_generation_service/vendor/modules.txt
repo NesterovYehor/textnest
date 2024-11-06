@@ -1,7 +1,8 @@
-# github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105182431-3f47b025af28
+# github.com/NesterovYehor/TextNest/pkg v0.0.0-20241105190841-8e366417e83a
 ## explicit; go 1.23.1
 github.com/NesterovYehor/TextNest/pkg/errors
 github.com/NesterovYehor/TextNest/pkg/helpers
+github.com/NesterovYehor/TextNest/pkg/http
 github.com/NesterovYehor/TextNest/pkg/validator
 # github.com/cespare/xxhash/v2 v2.2.0
 ## explicit; go 1.11

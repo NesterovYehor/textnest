@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package keymanager;
+
+option go_package = "./;key_manager";
+
+// Define the service with only the required methods
+service KeyManagerService {
+    rpc GetKey (GetKeyRequest) returns (GetKeyResponse);
+    rpc ReallocateKey (ReallocateKeyRequest) returns (ReallocateKeyResponse);
+}
+
+message GetKeyRequest {}
+message GetKeyResponse {
+    string key = 1;
+    string error = 2;
+}
+
+message ReallocateKeyRequest {
+    string key = 1;
+}
+
+message ReallocateKeyResponse {
+    string message = 1;
+    string error = 2;
+}
+

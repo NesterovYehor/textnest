@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -66,8 +67,11 @@ func ReallocateKey(key string, client *redis.Client) error {
 }
 
 func generateKey(client *redis.Client) error {
+	const maxRetries = 10 // Retry limit
+	retries := 0
+
 	key := make([]byte, 12) // Generate a longer key for more uniqueness
-	for {
+	for retries < maxRetries {
 		if _, err := rand.Read(key); err != nil {
 			return err
 		}
@@ -87,12 +91,15 @@ func generateKey(client *redis.Client) error {
 				// The key is unique, store it in Redis
 				err := client.SAdd(ctx, "unused_keys", encodedKey).Err()
 				if err != nil {
-					return errors.New("Failed to store new key: " + encodedKey)
+					return fmt.Errorf("Failed to store new key: %s", encodedKey)
 				}
 				return nil // Successfully generated and stored unique key
 			}
 		}
+		retries++
 	}
+
+	return errors.New("max retries reached for key generation")
 }
 
 func isMemberOfSet(client *redis.Client, value string, setName string) (bool, error) {
@@ -109,22 +116,22 @@ func isMemberOfSet(client *redis.Client, value string, setName string) (bool, er
 }
 
 func FillKeys(client *redis.Client, threshold int64) {
-    ctx, cancel := context.WithTimeout(context.Background(), timeout)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-    count, err := client.SCard(ctx, "unused_keys").Result() // Count of unused keys
-    if err != nil {
-        log.Fatalf("Failed to get count of unused keys: %v", err)
-    }
+	count, err := client.SCard(ctx, "unused_keys").Result() // Count of unused keys
+	if err != nil {
+		log.Fatalf("Failed to get count of unused keys: %v", err)
+	}
 
-    for count < threshold {
-        err := generateKey(client) // Ensure generateKey returns valid key and error
-        if err != nil {
-            log.Fatalf("Failed to generate a new key: %v", err)
-        }
+	for count < threshold {
+		err := generateKey(client) // Ensure generateKey returns valid key and error
+		if err != nil {
+			log.Fatalf("Failed to generate a new key: %v", err)
+		}
 
-        count++
-    }
+		count++
+	}
 }
 
 func IsKeyValid(v *validator.Validator, key string) {

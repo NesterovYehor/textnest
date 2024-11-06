@@ -9,17 +9,15 @@ import (
 
 type Config struct {
 	Port         string
-	BasePath     string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 	IdleTimeout  time.Duration
 }
 
 // NewConfig initializes default server settings
-func NewConfig() *Config {
+func NewConfig(port string) *Config {
 	return &Config{
-		Port:         ":8080",
-		BasePath:     "/api",
+		Port:         port,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
