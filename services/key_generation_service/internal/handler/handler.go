@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 
-	protos "github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/grpc_server/protos"
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/keymanager"
+	protos "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server/protos"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/keymanager"
 	"github.com/redis/go-redis/v9"
 )
 

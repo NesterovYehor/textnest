@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 
-	httpserver "github.com/NesterovYehor/TextNest/pkg/http"
+	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Grpc        *httpserver.Config
+	Grpc        *grpc.GrpcConfig
 	RedisOption struct {
 		Addr     string
 		Password string
@@ -26,7 +26,11 @@ func InitConfig() *Config {
 	}
 
 	port := os.Getenv("PORT")
+	host := os.Getenv("HOST")
 	cfg.RedisOption.Addr = os.Getenv("REDIS_ADDR")
-	cfg.Grpc = grpc
+	cfg.Grpc = &grpc.GrpcConfig{
+		Port: port,
+		Host: host,
+	}
 	return cfg
 }

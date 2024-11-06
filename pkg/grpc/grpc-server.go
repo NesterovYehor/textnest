@@ -17,9 +17,8 @@ const (
 )
 
 type GrpcConfig struct {
-	Port        string `mapstructure:"port"`
-	Host        string `mapstructure:"host"`
-	Development bool   `mapstructure:"development"`
+	Port string `mapstructure:"port"`
+	Host string `mapstructure:"host"`
 }
 
 type GrpcServer struct {
@@ -42,7 +41,8 @@ func NewGrpcServer(cfg *GrpcConfig) *GrpcServer {
 }
 
 func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
-	listen, err := net.Listen("tcp", srv.Config.Port)
+	fmt.Println(srv.Config.Port)
+	listen, err := net.Listen("tcp", fmt.Sprintf("%d:%d", srv.Config.Host, srv.Config.Port))
 	if err != nil {
 		return err
 	}

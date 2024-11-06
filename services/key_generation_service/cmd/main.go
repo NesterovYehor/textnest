@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/config"
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/redis"
-	"github.com/NesterovYehor/TextNest/tree/main/services/key_generation_service/internal/routes"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
+	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server/protos"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/handler"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/redis"
 )
 
 func main() {
@@ -25,9 +25,11 @@ func main() {
 		log.Panic(err)
 	}
 
-    grpcSrv := grpc.
+	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 
-    if err := grpc.{
+	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, handler.NewKeyManagerServer(redisClient))
+
+	if err = grpcSrv.RunGrpcServer(ctx); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
