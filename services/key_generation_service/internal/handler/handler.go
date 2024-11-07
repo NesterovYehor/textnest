@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	protos "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/keymanager"
@@ -23,6 +24,7 @@ func NewKeyManagerServer(redisClient *redis.Client) *KeyManagerServer {
 
 // GetKey now uses the Redis client passed in the server struct
 func (s *KeyManagerServer) GetKey(ctx context.Context, req *protos.GetKeyRequest) (*protos.GetKeyResponse, error) {
+    fmt.Println("PENIS")
 	key, err := keymanager.GetKey(s.RedisClient) // Pass Redis client to GetKey
 	if err != nil {
 		return &protos.GetKeyResponse{Error: err.Error()}, nil

@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
 
-const (
-	maxConnectionIdle = 5
-	gRPCTimeout       = 15
-	maxConnectionAge  = 5
-	gRPCTime          = 10
-)
+const maxConnectionIdle = 5 * time.Minute
+const maxConnectionAge = 5 * time.Minute
+const gRPCTimeout = 15 * time.Second
+const gRPCTime = 10 * time.Second
 
 type GrpcConfig struct {
-	Port string `mapstructure:"port"`
+	Port string `mapstrucTure:"port"`
 	Host string `mapstructure:"host"`
 }
 
@@ -42,7 +41,6 @@ func NewGrpcServer(cfg *GrpcConfig) *GrpcServer {
 
 func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
 	address := fmt.Sprintf("%s:%s", srv.Config.Host, srv.Config.Port)
-	fmt.Println(address)
 	listen, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
@@ -60,7 +58,7 @@ func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
 		}
 	}()
 
-	fmt.Printf("grpc server is listening on port: %s\n", srv.Config.Port)
+	fmt.Printf("grpc server is listening on: %s\n", address)
 
 	err = srv.Grpc.Serve(listen)
 	if err != nil {

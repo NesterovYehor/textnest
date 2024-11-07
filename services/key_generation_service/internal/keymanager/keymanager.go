@@ -16,6 +16,7 @@ import (
 const timeout = time.Second * 5 // Set a consistent timeout duration
 
 func GetKey(client *redis.Client) (string, error) {
+    fmt.Println("PENIS")
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

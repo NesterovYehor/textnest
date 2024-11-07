@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.3
-// source: internal/grpc_server/protos/key_manager.proto
+// source: key_manager.proto
 
 package key_manager
 
@@ -159,5 +159,5 @@ var KeyManagerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "internal/grpc_server/protos/key_manager.proto",
+	Metadata: "key_manager.proto",
 }
