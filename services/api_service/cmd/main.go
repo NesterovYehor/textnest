@@ -3,8 +3,8 @@ package main
 import (
 	"sync"
 
-	"github.com/NesterovYehor/pastebin/tree/main/internal/services/api_service/config"
-	"github.com/NesterovYehor/pastebin/tree/main/internal/services/api_service/server"
+	"github.com/NesterovYehor/TextNest/services/api_service/config"
+	"github.com/NesterovYehor/TextNest/services/api_service/server"
 )
 
 func main() {
