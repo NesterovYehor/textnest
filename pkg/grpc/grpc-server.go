@@ -42,7 +42,7 @@ func NewGrpcServer(cfg *GrpcConfig) *GrpcServer {
 
 func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
 	fmt.Println(srv.Config.Port)
-	listen, err := net.Listen("tcp", fmt.Sprintf("%d:%d", srv.Config.Host, srv.Config.Port))
+	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", srv.Config.Host, srv.Config.Port))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("shutting down grpc PORT: {%s}", srv.Config.Port)
+				fmt.Printf("shutting down grpc PORT: %s\n", srv.Config.Port)
 				srv.shutdown()
 				fmt.Println("grpc exited properly")
 				return
@@ -59,11 +59,11 @@ func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
 		}
 	}()
 
-	fmt.Println("grpc server is listening on port: %s", srv.Config.Port)
+	fmt.Printf("grpc server is listening on port: %s\n", srv.Config.Port)
 
 	err = srv.Grpc.Serve(listen)
 	if err != nil {
-		fmt.Sprintf("[grpcServer_RunGrpcServer.Serve] grpc server serve error: %+v", err)
+		fmt.Printf("[grpcServer_RunGrpcServer.Serve] grpc server serve error: %+v", err)
 	}
 
 	return err

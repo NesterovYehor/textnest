@@ -9,7 +9,7 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
-	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server/protos"
+	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/handler"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/redis"
 )

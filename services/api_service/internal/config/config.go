@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/NesterovYehor/TextNest/pkg/http"
 )
 
 var (
@@ -12,8 +14,8 @@ var (
 )
 
 type Config struct {
-	Addr string
 	Env  string
+	Http *httpserver.Config
 	Grpc struct {
 		Addr string
 	}
@@ -21,9 +23,11 @@ type Config struct {
 
 func InitConfig() *Config {
 	cfg := &Config{}
-	flag.StringVar(&cfg.Addr, "port", "8080", "API server port")
+    port := ":8989"
 	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.Grpc.Addr, "localhost:5555", "Grpc-addr", "")
+	flag.StringVar(&cfg.Grpc.Addr, "localhost:5555", "localhost:5555", "localhost:5555")
+
+	cfg.Http = httpserver.NewConfig(port)
 
 	displayVersion := flag.Bool("version", false, "Display version and exit")
 
