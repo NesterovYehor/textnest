@@ -3,7 +3,7 @@ module github.com/NesterovYehor/TextNest/services/key_generation_service
 go 1.23.1
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241107102108-985c776a7352
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241107132247-bd59adae22ac
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
