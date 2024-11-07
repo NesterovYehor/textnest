@@ -41,8 +41,8 @@ func NewGrpcServer(cfg *GrpcConfig) *GrpcServer {
 }
 
 func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
-	fmt.Println(srv.Config.Port)
-	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", srv.Config.Host, srv.Config.Port))
+	address := fmt.Sprintf("%s:%s", srv.Config.Host, srv.Config.Port)
+	listen, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
 	}
