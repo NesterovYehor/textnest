@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
@@ -23,6 +24,7 @@ func StartRedis(cfg *config.Config) (*redis.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("redis server is on: %s\n", cfg.RedisOption.Addr)
 
 	return rdb, nil
 }

@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/NesterovYehor/TextNest/services/api_service/internal/config"
 )
 
 // RunServer starts the HTTP server and handles graceful shutdowns.

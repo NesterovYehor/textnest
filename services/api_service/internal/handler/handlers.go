@@ -36,7 +36,7 @@ func CreateNewPaste(w http.ResponseWriter, r *http.Request, cfg *config.Config) 
 }
 
 func getNewKey(cfg *config.Config, ctx context.Context) (string, error) {
-	conn, err := grpc.NewClient("localhost:5555", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cfg.Grpc.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func getNewKey(cfg *config.Config, ctx context.Context) (string, error) {
 	req := &key_manager.GetKeyRequest{}
 	res, err := client.GetKey(ctx, req)
 	if err != nil {
-	    fmt.Println(err)
+		fmt.Println(err)
 		return "", err
 	}
 
