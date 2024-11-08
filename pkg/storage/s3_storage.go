@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NesterovYehor/TextNest/tree/main/services/storage_service/models"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -36,7 +35,7 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 }
 
 // GetPaste retrieves a paste from S3 and decodes it into PasteData.
-func (storage *S3Storage) GetPaste(key string) (string, error) {
+func (storage *S3Storage) GetPaste(key string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -46,22 +45,22 @@ func (storage *S3Storage) GetPaste(key string) (string, error) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to load data from storage: %w", err)
+		return nil, fmt.Errorf("failed to load data from storage: %w", err)
 	}
 	defer res.Body.Close()
 
 	// Read the object data
 	pasteContent, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read object data: %w", err)
+		return nil, fmt.Errorf("failed to read object data: %w", err)
 	}
 
 	// Convert the byte slice to a string and return it
-	return string(pasteContent), nil
+	return pasteContent, nil
 }
 
 // UploadPaste uploads paste data to S3 and returns the upload location URL
-func (storage *S3Storage) UploadPaste(data *models.PasteData) (string, error) {
+func (storage *S3Storage) UploadPaste(key string, data []byte) error {
 	uploader := manager.NewUploader(storage.S3)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -70,17 +69,17 @@ func (storage *S3Storage) UploadPaste(data *models.PasteData) (string, error) {
 	fmt.Println(storage.Bucket)
 
 	// Upload the paste data to S3
-	res, err := uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(storage.Bucket),
-		Key:    aws.String(data.Key),
-		Body:   strings.NewReader(data.Content),
+		Key:    aws.String(key),
+		Body:   strings.NewReader(string(data)),
 		ACL:    "public-read",
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return res.Location, nil
+	return nil
 }
 
 // DeletePaste deletes a paste from S3

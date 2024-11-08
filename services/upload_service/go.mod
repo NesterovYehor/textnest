@@ -1,4 +1,4 @@
-module github.com/NesterovYehor/TextNest/tree/main/services/storage_service
+module github.com/NesterovYehor/TextNest/services/upload_service
 
 go 1.23.1
 
