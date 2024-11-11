@@ -45,6 +45,6 @@ func RunServer(ctx *context.Context, cfg *Config, handler http.Handler) error {
 		}
 	}()
 
-	fmt.Printf("server listening on port %s", cfg.Port)
+	fmt.Printf("server listening on port %s\n", cfg.Port)
 	return srv.ListenAndServe()
 }

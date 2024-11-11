@@ -8,7 +8,6 @@ import (
 	"net/http"
 )
 
-
 type Envelope map[string]any
 
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
@@ -49,17 +48,27 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 }
 
 func WriteJSON(w http.ResponseWriter, data any, status int, headers http.Header) error {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
+    jsonData, err := json.Marshal(data)
+    if err != nil {
+        return err
+    }
 
-	for key, value := range headers {
-		w.Header()[key] = value
-	}
-	w.Header().Set("Content-Type", "application/json")
+    if headers != nil {
+        for key, value := range headers {
+            w.Header()[key] = value
+        }
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+
+    // WriteHeader is only called once by http.Write automatically
     w.WriteHeader(status)
-    w.Write(jsonData)
+
+    // Write the JSON data to the response
+    if _, err := w.Write(jsonData); err != nil {
+        return err
+    }
 
     return nil
 }
+

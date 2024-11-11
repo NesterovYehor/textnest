@@ -4,17 +4,17 @@ import (
 	"log"
 	"os"
 
+	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Addr    string
+	Grpc    *grpc.GrpcConfig
 	Storage struct {
-		Bucket    string
-		Region    string
-		AccessKey string // Capitalized for visibility
-		SecretKey string // Changed to correct environment variable
+		Bucket string
+		Region string
 	}
+	DbUrl string
 }
 
 func InitConfig() *Config {
@@ -24,7 +24,14 @@ func InitConfig() *Config {
 		log.Fatal("Error loading .env file")
 	}
 
-	cfg.Addr = os.Getenv("PORT")
-	cfg.Storage.Bucket = os.Getenv("BUCKET") // Correct key
+	port := os.Getenv("PORT")
+	host := os.Getenv("HOST")
+	cfg.Storage.Bucket = os.Getenv("BUCKET")
+	cfg.Storage.Region = os.Getenv("REGION")
+	cfg.DbUrl = os.Getenv("DB_URL")
+	cfg.Grpc = &grpc.GrpcConfig{
+		Port: port,
+		Host: host,
+	}
 	return cfg
 }

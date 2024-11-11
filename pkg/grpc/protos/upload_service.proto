@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package uploadservice;
+
+option go_package = "./;upload_service";
+
+import "google/protobuf/timestamp.proto"; // Import the timestamp type
+
+service UploadService {
+    rpc Upload (UploadRequest) returns (UploadResponse);
+}
+
+message UploadRequest {
+    string key = 1;                             // Paste key
+    google.protobuf.Timestamp expiration_date = 2;  // Expiration date
+    bytes data = 3;                             // Paste data
+}
+
+message UploadResponse {
+    string message = 1;                        // Response message
+}
+

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/keymanager"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,6 +26,8 @@ func StartRedis(cfg *config.Config) (*redis.Client, error) {
 		return nil, err
 	}
 	fmt.Printf("redis server is on: %s\n", cfg.RedisOption.Addr)
+
+	keymanager.FillKeys(rdb, 10)
 
 	return rdb, nil
 }

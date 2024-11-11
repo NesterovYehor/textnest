@@ -18,13 +18,12 @@ func main() {
 
 	cfg := config.InitConfig()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/key", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v1/upload", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Request received")
-		handler.CreateNewPaste(w, r, cfg) // Pass the pointer to cfg
+		handler.UploadPaste(w, r, cfg, ctx) // Pass the pointer to cfg
 	})
 
 	if err := httpserver.RunServer(&ctx, cfg.Http, mux); err != nil {
 		log.Panic(err)
 	}
 }
-
