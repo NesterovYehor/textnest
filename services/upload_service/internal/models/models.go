@@ -3,12 +3,12 @@ package models
 import "database/sql"
 
 type Models struct {
-	Paste PasteModel
+	MetaData MetadataModel
 }
 
 func NewModel(db *sql.DB) Models {
 	return Models{
-		Paste: PasteModel{
+		MetaData: MetadataModel{
 			db: db,
 		},
 	}

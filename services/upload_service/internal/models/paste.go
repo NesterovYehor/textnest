@@ -14,11 +14,11 @@ type MetaData struct {
 	ExpirationDate time.Time `json: "expiration_date"`
 }
 
-type PasteModel struct {
+type MetadataModel struct {
 	db *sql.DB
 }
 
-func (model *PasteModel) Insert(metadata *MetaData) error {
+func (model *MetadataModel) Insert(metadata *MetaData) error {
 	query := `
         INSERT INTO metadata(key, created_at, expiration_date) 
         VALUES ($1, $2, $3)

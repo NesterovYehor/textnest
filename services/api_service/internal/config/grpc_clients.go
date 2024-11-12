@@ -21,7 +21,7 @@ func InitializeKeyManagerClient(cfg *Config) {
 }
 
 // InitializeUploadClient initializes the Upload Service gRPC client
-func InitializeUploadClient(cfg *Config) {
+func InitializeUploadClient(cfg *Config){
 	uploadConn, err := grpc.Dial(cfg.Grpc.UploadAddr, grpc.WithTransportCredentials(insecure.NewCredentials())) // Use Dial instead of NewClient
 	if err != nil {
 		log.Fatalf("Failed to connect to Upload service: %v", err)

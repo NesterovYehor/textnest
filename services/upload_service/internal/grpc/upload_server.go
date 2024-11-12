@@ -46,7 +46,7 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 			}
 		}
 
-		err := srv.models.Paste.Insert(&metadata)
+		err := srv.models.MetaData.Insert(&metadata)
 		if err != nil {
 			errCh <- err.Error()
 		}
