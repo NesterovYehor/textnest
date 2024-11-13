@@ -9,14 +9,13 @@ import (
 	"syscall"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
-	upload_service "github.com/NesterovYehor/TextNest/services/upload_service/internal/grpc"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/storage"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
+	download_service "github.com/NesterovYehor/TextNest/services/download_service/internal/grpc_server"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/storage"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-// openDB initializes a new database connection and checks for errors
 func openDB(dsn string) (*sql.DB, error) {
 	// Open the database connection
 	db, err := sql.Open("postgres", dsn)
@@ -28,7 +27,6 @@ func openDB(dsn string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-    log.Println("Conected to database:", db)
 
 	return db, nil
 }
@@ -63,7 +61,7 @@ func main() {
 	models := models.NewModel(db)
 
 	// Register the UploadService with the gRPC server
-	upload_service.RegisterUploadServiceServer(grpcSrv.Grpc, upload_service.NewUploadServer(storage, models))
+	download_service.RegisterDownloadServiceServer(grpcSrv.Grpc, download_service.NewDownloadServer(storage, models))
 
 	// Run the gRPC server
 	if err := grpcSrv.RunGrpcServer(ctx); err != nil {

@@ -1,0 +1,9 @@
+
+services:
+  upload_service:
+    build:
+      context: ../services/upload_service  # Path to the directory containing the Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"  # Maps port 8081 in the container to port 8081 on the host
+

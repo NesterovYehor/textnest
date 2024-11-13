@@ -1,5 +1,5 @@
 package storage
 
-type storage interface {
-	Uploadpaste(key string, data []byte) error // upload post data to blob storage
+type Storage interface {
+	UploadPaste(key string, data []byte) error // upload post data to blob storage
 }

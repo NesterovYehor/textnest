@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -33,23 +32,29 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 	}, nil
 }
 
-// UploadPaste uploads paste data to S3 and returns the upload location URL
-func (storage *S3Storage) UploadPaste(key string, data []byte) error {
-	uploader := manager.NewUploader(storage.S3)
+func (storage *S3Storage) DownloadPaste(key string) ([]byte, error) {
+	// Create the downloader with the S3 client
+	downloader := manager.NewDownloader(storage.S3)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	// Set a timeout for the context
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Upload the paste data to S3
-	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
+	// Use manager.WriteAtBuffer to store the downloaded content
+	buf := manager.NewWriteAtBuffer([]byte{})
+
+	// Create the GetObjectInput with the S3 key and bucket name
+	input := &s3.GetObjectInput{
 		Bucket: aws.String(storage.Bucket),
 		Key:    aws.String(key),
-		Body:   strings.NewReader(string(data)),
-		ACL:    "public-read",
-	})
-	if err != nil {
-		return err
 	}
 
-	return nil
+	// Perform the download operation and capture the result into the buffer
+	_, err := downloader.Download(ctx, buf, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download object from S3: %v", err)
+	}
+
+	// Return the content as a byte slice
+	return buf.Bytes(), nil
 }

@@ -13,12 +13,14 @@ import (
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/storage"
 )
 
+// UploadServer implements the UploadService server.
 type UploadServer struct {
-	UnimplementedUploadServiceServer
-	storage storage.Storage
-	models  models.Models
+	UnimplementedUploadServiceServer // Ensure this is the correct unimplemented server from the generated code
+	storage                          storage.Storage
+	models                           models.Models
 }
 
+// NewUploadServer creates a new instance of UploadServer.
 func NewUploadServer(storage storage.Storage, models models.Models) *UploadServer {
 	return &UploadServer{
 		storage: storage,
@@ -26,6 +28,7 @@ func NewUploadServer(storage storage.Storage, models models.Models) *UploadServe
 	}
 }
 
+// Upload handles the upload request, saving metadata to the database and content to storage.
 func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*UploadResponse, error) {
 	var wg sync.WaitGroup
 	metadata := models.MetaData{
@@ -33,9 +36,9 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 		ExpirationDate: req.ExpirationDate.AsTime(),
 		CreatedAt:      time.Now(),
 	}
-	errCh := make(chan string, 2) // Buffered channel to collect errors
+	errCh := make(chan string, 2) // Channel to collect errors from goroutines
 
-	// Goroutine to validate metadata and insert into DB
+	// Goroutine to validate metadata and insert it into the database
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -46,35 +49,36 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 			}
 		}
 
-		err := srv.models.MetaData.Insert(&metadata)
-		if err != nil {
+		if err := srv.models.MetaData.Insert(&metadata); err != nil {
 			errCh <- err.Error()
+		} else {
+			fmt.Println("Metadata uploaded successfully to DB")
 		}
-		fmt.Println("Metadata uploaded sucesfully to db")
 	}()
 
-	// Goroutine to handle the upload to storage
+	// Goroutine to upload the content to storage
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := srv.storage.UploadPaste(metadata.Key, req.Data)
-		if err != nil {
+		if err := srv.storage.UploadPaste(metadata.Key, req.Data); err != nil {
 			errCh <- err.Error()
+		} else {
+			fmt.Println("Paste uploaded successfully to storage")
 		}
-		fmt.Println("Paste uploaded sucesfully to storage")
 	}()
-	// Wait for both goroutines to finish and check for errors
-	wg.Wait()
-	close(errCh) // Close the channel after both goroutines are done
 
-	// Collect and handle any errors
+	// Wait for both goroutines to complete and close the error channel
+	wg.Wait()
+	close(errCh)
+
+	// Collect any errors from the error channel
 	var errorMessages []string
 	for err := range errCh {
 		errorMessages = append(errorMessages, err)
 	}
 
 	if len(errorMessages) > 0 {
-		// Return all collected error messages
+		// Log and return the collected error messages
 		log.Printf("Errors during upload: %v", errorMessages)
 		return &UploadResponse{
 			Message: "Error(s) occurred: " + strings.Join(errorMessages, ", "),

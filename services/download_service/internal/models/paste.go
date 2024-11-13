@@ -5,22 +5,23 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/NesterovYehor/TextNest/pkg/validator"
 )
 
-type Paste struct {
+type Metadata struct {
 	Key         string
 	CreatedAt   time.Time
 	ExpiredDate time.Time
-	Content     string
 }
 
-type PasteModel struct {
+type MetadataModel struct {
 	DB *sql.DB
 }
 
-func (model *PasteModel) Get(key string) (*Paste, error) {
+func (model *MetadataModel) Get(key string) (*Metadata, error) {
 	query := `
-        SELECT key, content, created_at, updated_at FROM metadata WHERE key = $1
+        SELECT key, created_at, expiration_date FROM metadata WHERE key = $1
     `
 
 	// Set up a context with a timeout for the database query
@@ -28,7 +29,7 @@ func (model *PasteModel) Get(key string) (*Paste, error) {
 	defer cancel()
 
 	// Prepare a variable to hold the result
-	var paste Paste
+	var paste Metadata
 
 	// Execute the query and scan the result into the paste struct
 	err := model.DB.QueryRowContext(ctx, query, key).Scan(
@@ -46,4 +47,8 @@ func (model *PasteModel) Get(key string) (*Paste, error) {
 
 	// Return the Paste object
 	return &paste, nil
+}
+
+func (model *MetadataModel) IsKeyValid(key string, v *validator.Validator) {
+	v.Check(len([]rune(key)) != 8, "key", "Key must be 8 chars lenth")
 }
