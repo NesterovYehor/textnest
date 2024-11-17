@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Grpc        *grpc.GrpcConfig
+	KafkaConfig *KafkaConfig
 	RedisOption struct {
 		Addr     string
 		Password string
@@ -32,5 +33,6 @@ func InitConfig() *Config {
 		Port: port,
 		Host: host,
 	}
+	cfg.KafkaConfig = LoadKafkaConfig()
 	return cfg
 }

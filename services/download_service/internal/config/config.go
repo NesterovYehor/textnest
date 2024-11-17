@@ -14,7 +14,8 @@ type Config struct {
 		Bucket string
 		Region string
 	}
-	DbUrl string
+	DbUrl               string
+	KafkaConsumerConfig *KafkaConsumerConfig
 }
 
 func InitConfig() *Config {
@@ -33,5 +34,6 @@ func InitConfig() *Config {
 		Port: port,
 		Host: host,
 	}
+	cfg.KafkaConsumerConfig = LoadKafkaConfig()
 	return cfg
 }
