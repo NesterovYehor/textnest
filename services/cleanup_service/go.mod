@@ -27,12 +27,13 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 )
 
 require (
 	github.com/IBM/sarama v1.43.3
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241117031950-a4ee8a72b014
 	github.com/aws/aws-sdk-go-v2 v1.32.4
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.28.3

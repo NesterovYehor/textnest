@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/kafka"
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/storage"
 )
@@ -44,7 +44,7 @@ func (checker *ExpirationChecker) CheckForExpiredPastes() {
 		return
 	}
 
-	err = kafka.SendExpiredKeysToKafka(checker.kafkaProducer, jsonExpiredKeys)
+	err = kafka.Pr
 	if err != nil {
 		log.Println("Failed to produce message to kafka")
 		return
