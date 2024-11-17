@@ -1,7 +1,5 @@
 package kafka
 
-import 
-
 type KafkaConfig struct {
 	Brokers    []string
 	Topics     []string

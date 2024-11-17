@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/config"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/kafka"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/scheduler"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/storage"

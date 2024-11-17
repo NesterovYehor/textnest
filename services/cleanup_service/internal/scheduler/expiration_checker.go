@@ -16,6 +16,7 @@ type ExpirationChecker struct {
 }
 
 func NewExpirationChecker(repo *repository.PasteRepository, storage storage.Storage, kafkaProducer *kafka.KafkaProducer) *ExpirationChecker {
+    
 	return &ExpirationChecker{
 		repo:          repo,
 		storage:       storage,
@@ -44,7 +45,7 @@ func (checker *ExpirationChecker) CheckForExpiredPastes() {
 		return
 	}
 
-	err = kafka.Pr
+	err = kafka.
 	if err != nil {
 		log.Println("Failed to produce message to kafka")
 		return

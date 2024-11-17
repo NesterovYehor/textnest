@@ -45,7 +45,7 @@ func (producer *KafkaProducer) ProduceMessages(messageValue string, topic string
 			return nil
 		case err := <-producer.asyncProducer.Errors():
 			if attempts < producer.kafkaConfig.MaxRetries-1 {
-                time.Sleep(time.Duration(math.Pow(2, float64(attempts))) * time.Second)
+				time.Sleep(time.Duration(math.Pow(2, float64(attempts))) * time.Second)
 				continue
 			}
 			log.Println("Error producing message:", err)

@@ -2,7 +2,10 @@ module github.com/NesterovYehor/TextNest/services/cleanup_service
 
 go 1.23.3
 
-require github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
+require (
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241117112000-6a01a7abd983
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
+)
 
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.44 // indirect
@@ -32,8 +35,7 @@ require (
 )
 
 require (
-	github.com/IBM/sarama v1.43.3
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241117031950-a4ee8a72b014
+	github.com/IBM/sarama v1.43.3 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.32.4
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.28.3
