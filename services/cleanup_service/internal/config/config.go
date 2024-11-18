@@ -11,7 +11,7 @@ type Config struct {
 	ExpirationInterval time.Duration
 	BucketName         string
 	S3Region           string
-	KafkaConfig        *kafka.KafkaConfig
+	Kafka              *kafka.KafkaConfig
 }
 
 func (cfg *Config) Init() {
@@ -28,5 +28,5 @@ func (cfg *Config) Init() {
 	brokers = append(brokers, "localhost:9092")
 	topics := make([]string, 0, 1)
 	topics = append(brokers, "relocate-key")
-	cfg.KafkaConfig = kafka.LoadKafkaConfig(brokers, topics, "1", 5)
+	cfg.Kafka = kafka.LoadKafkaConfig(brokers, topics, "1", 5)
 }

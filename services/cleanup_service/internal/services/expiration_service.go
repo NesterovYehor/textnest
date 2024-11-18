@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os"
@@ -25,18 +26,20 @@ func NewExpirationService(db *sql.DB) *ExpirationService {
 	}
 }
 
-func (service *ExpirationService) Start(cfg *config.Config) {
+func (service *ExpirationService) Start(cfg *config.Config, ctx context.Context) {
 	repo := repository.NewPasteRepository(service.db)
 	storage, err := storage.NewS3Storage(cfg.BucketName, cfg.S3Region)
 	if err != nil {
 		log.Printf("Failed to connect to bucket %v, inn region %v", cfg.BucketName, cfg.S3Region)
 		return
 	}
-	kafkaProducer, err := kafka.NewProducer(*cfg.KafkaConfig)
+	kafkaProducer, err := kafka.NewProducer(*cfg.Kafka, ctx)
 	if err != nil {
 		log.Println("Failed to create a kafka producer")
 		return
 	}
+
+    defer kafkaProducer.Close()
 
 	checker := scheduler.NewExpirationChecker(repo, storage, kafkaProducer)
 	ticker := time.NewTicker(cfg.ExpirationInterval)
@@ -49,10 +52,11 @@ func (service *ExpirationService) Start(cfg *config.Config) {
 	for {
 		select {
 		case <-ticker.C:
-			checker.CheckForExpiredPastes()
+			checker.CheckForExpiredPastes(cfg)
 
 		case <-stop:
 			log.Println("Expiration service shutting down")
+			kafkaProducer.Close()
 			return
 		}
 	}

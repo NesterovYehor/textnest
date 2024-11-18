@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
+	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/storage"
 )
@@ -16,7 +17,6 @@ type ExpirationChecker struct {
 }
 
 func NewExpirationChecker(repo *repository.PasteRepository, storage storage.Storage, kafkaProducer *kafka.KafkaProducer) *ExpirationChecker {
-    
 	return &ExpirationChecker{
 		repo:          repo,
 		storage:       storage,
@@ -24,39 +24,34 @@ func NewExpirationChecker(repo *repository.PasteRepository, storage storage.Stor
 	}
 }
 
-func (checker *ExpirationChecker) CheckForExpiredPastes() {
-	// Retrieve expired keys from the repository
+func (checker *ExpirationChecker) CheckForExpiredPastes(cfg *config.Config) {
 	expiredKeys, err := checker.repo.DeleteAndReturnExpiredKeys()
 	if err != nil {
-		log.Println("Error retrieving expired pastes:", err)
+		log.Printf("Error retrieving expired pastes: %v", err)
 		return
 	}
 
-	// Delete expired pastes from storage
-	err = checker.storage.DeleteExpiredPastes(expiredKeys) // Pass appropriate lifetimeSecs
-	if err != nil {
-		log.Println("Error deleting expired pastes from storage:", err)
+	if len(expiredKeys) == 0 {
+		log.Println("No expired pastes found.")
+		return
+	}
+
+	if err := checker.storage.DeleteExpiredPastes(expiredKeys); err != nil {
+		log.Printf("Error deleting expired pastes from storage: %v", err)
 		return
 	}
 
 	jsonExpiredKeys, err := formatExpiredKeysMessage(expiredKeys)
 	if err != nil {
-		log.Println("Failded to encode keys to json")
+		log.Printf("Failed to encode keys to JSON: %v", err)
 		return
 	}
 
-	err = kafka.
-	if err != nil {
-		log.Println("Failed to produce message to kafka")
+	if err := checker.kafkaProducer.ProduceMessages(jsonExpiredKeys, "Relocate-Keys-Topic"); err != nil {
+		log.Printf("Failed to produce message to Kafka (Topic: %s): %v", "Relocate-Keys-Topic", err)
 		return
 	}
-
-	// Log the deleted keys
-	if len(expiredKeys) > 0 {
-		log.Printf("Successfully deleted expired pastes: %v", expiredKeys)
-	} else {
-		log.Println("No expired pastes found.")
-	}
+	log.Printf("Successfully deleted expired pastes and sent to Kafka: %v", expiredKeys)
 }
 
 func formatExpiredKeysMessage(keys []string) (string, error) {

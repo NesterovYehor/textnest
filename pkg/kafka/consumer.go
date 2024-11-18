@@ -54,6 +54,14 @@ func (kc *KafkaConsumer) Start() error {
 	}
 }
 
+func (kc *KafkaConsumer) Close() error {
+	err := kc.consumer.Close()
+	if err != nil {
+		log.Printf("Failed to close Kafka consumer: %v", err)
+	}
+	return err
+}
+
 // consumerGroupHandler implements sarama.ConsumerGroupHandler.
 type consumerGroupHandler struct {
 	handlers map[string]MessageHandler
