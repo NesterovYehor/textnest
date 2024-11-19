@@ -1,45 +1,49 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 )
 
-// Logger interface to be used by services
-type Logger interface {
-	Info(msg string, keyvals ...interface{})
-	Error(msg string, keyvals ...interface{})
-	Debug(msg string, keyvals ...interface{})
-}
-
-// Config holds configuration options for the logger.
-type Config struct {
-	Level  slog.Level // Log level (e.g., Info, Warn, Error)
-	Format string     // Format of the log output ("text" or "json")
-	Output *os.File   // Log output destination (e.g., os.Stdout, os.Stderr)
+type Logger struct {
+	log *slog.Logger
 }
 
 // NewLogger creates a new logger instance with the given configuration.
-func NewLogger(cfg Config) Logger {
-	var handler slog.Handler
-	if cfg.Format == "json" {
-		handler = slog.NewJSONHandler(cfg.Output, &slog.HandlerOptions{Level: cfg.Level})
-	} else {
-		handler = slog.NewTextHandler(cfg.Output, &slog.HandlerOptions{Level: cfg.Level})
+func NewLogger(w io.Writer, level slog.Level) *Logger {
+	opts := slog.HandlerOptions{
+		Level: level,
 	}
+	logger := slog.New(slog.NewTextHandler(w, &opts))
+	slog.SetDefault(logger) // Set this as the global default logger if needed.
 
-	return slog.New(handler) // Return a new logger instance for the service
+	return &Logger{
+		log: logger,
+	}
 }
 
-// Helper logging functions for simplicity
-func Info(logger Logger, msg string, keyvals ...interface{}) {
-	logger.Info(msg, keyvals...)
+// DefaultLogger initializes a default logger writing to stdout at the INFO level.
+func DefaultLogger() *Logger {
+	return NewLogger(os.Stdout, slog.LevelInfo)
 }
 
-func Error(logger Logger, msg string, keyvals ...interface{}) {
-	logger.Error(msg, keyvals...)
+// Info logs an informational message.
+func (l *Logger) Info(msg string, keysAndValues ...any) {
+	l.log.Info(msg, keysAndValues...)
 }
 
-func Debug(logger Logger, msg string, keyvals ...interface{}) {
-	logger.Debug(msg, keyvals...)
+// Error logs an error message.
+func (l *Logger) Error(msg string, keysAndValues ...any) {
+	l.log.Error(msg, keysAndValues...)
+}
+
+// Warn logs a warning message.
+func (l *Logger) Warn(msg string, keysAndValues ...any) {
+	l.log.Warn(msg, keysAndValues...)
+}
+
+// Debug logs a debug message.
+func (l *Logger) Debug(msg string, keysAndValues ...any) {
+	l.log.Debug(msg, keysAndValues...)
 }

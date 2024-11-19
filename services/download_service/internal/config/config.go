@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	"github.com/joho/godotenv"
 )
 
@@ -14,8 +15,8 @@ type Config struct {
 		Bucket string
 		Region string
 	}
-	DbUrl               string
-	KafkaConsumerConfig *KafkaConsumerConfig
+	DbUrl string
+	Kafka *kafka.KafkaConfig
 }
 
 func InitConfig() *Config {
@@ -34,6 +35,10 @@ func InitConfig() *Config {
 		Port: port,
 		Host: host,
 	}
-	cfg.KafkaConsumerConfig = LoadKafkaConfig()
+	brokers := make([]string, 0, 1)
+	brokers = append(brokers, "localhost:9092")
+	topics := make(map[string]string)
+    topics["delete_expired_paste"] = "DELETE_EXPIRED_PASTE"
+	cfg.Kafka = kafka.LoadKafkaConfig(brokers, topics, "1", 5)
 	return cfg
 }

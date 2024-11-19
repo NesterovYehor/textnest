@@ -2,42 +2,49 @@ package download_service
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
-	"github.com/NesterovYehor/TextNest/pkg/validator"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/storage"
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type DownloadServer struct {
+type DownloadService struct {
 	UnimplementedDownloadServiceServer
-	storage storage.Storage
-	model   models.Models
+	dbRepo      repository.MetadataRepository
+	storageRepo repository.StorageRepository
+	cfg         *config.Config
 }
 
-func NewDownloadServer(storage storage.Storage, model models.Models) *DownloadServer {
-	return &DownloadServer{
-		storage: storage,
-		model:   model,
+func NewDownloadService(storageRepo repository.StorageRepository, dbRepo repository.MetadataRepository) *DownloadService {
+	return &DownloadService{
+		dbRepo:      dbRepo,
+		storageRepo: storageRepo,
 	}
 }
 
-func (srv *DownloadServer) Download(ctx context.Context, req *DownloadRequest) (*DownloadResponse, error) {
-	v := validator.New()
-
-	if srv.model.Metadata.IsKeyValid(req.Key, v); v.Valid() {
-		return nil, errors.New("Key is invalid")
-	}
-
-	metadata, err := srv.model.Metadata.Get(req.Key)
+func (srv *DownloadService) Download(ctx context.Context, req *DownloadRequest) (*DownloadResponse, error) {
+	metadata, err := srv.dbRepo.DownloadPasteMetadata(req.Key)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	content, err := srv.storage.DownloadPaste(req.Key)
+	if time.Now().After(metadata.ExpiredDate) {
+		producer, err := kafka.NewProducer(*srv.cfg.Kafka, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = producer.ProduceMessages(metadata.Key, srv.cfg.Kafka.Topics["delete-expired-paste"])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	content, err := srv.storageRepo.DownloadPasteContent(srv.cfg.Storage.Bucket, metadata.Key)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

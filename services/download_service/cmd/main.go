@@ -11,8 +11,7 @@ import (
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
 	download_service "github.com/NesterovYehor/TextNest/services/download_service/internal/grpc_server"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/storage"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
@@ -43,7 +42,7 @@ func main() {
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 
 	// Initialize S3 storage
-	storage, err := storage.NewS3Storage(cfg.Storage.Bucket, cfg.Storage.Region)
+	storageRepo, err := repository.NewStorageRepository(cfg.Storage.Bucket, cfg.Storage.Bucket)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -58,10 +57,10 @@ func main() {
 	defer db.Close()
 
 	// Initialize models with the database connection
-	models := models.NewModel(db)
+	models := repository.NewMetadataRepo(db)
 
 	// Register the UploadService with the gRPC server
-	download_service.RegisterDownloadServiceServer(grpcSrv.Grpc, download_service.NewDownloadServer(storage, models))
+	download_service.RegisterDownloadServiceServer(grpcSrv.Grpc, download_service.NewDownloadService(storageRepo, models))
 
 	// Run the gRPC server
 	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
