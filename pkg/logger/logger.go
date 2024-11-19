@@ -1,49 +1,60 @@
-package logger
+package jsonlog
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
+	"runtime/debug"
 )
 
 type Logger struct {
-	log *slog.Logger
+	logger *slog.Logger
 }
 
-// NewLogger creates a new logger instance with the given configuration.
-func NewLogger(w io.Writer, level slog.Level) *Logger {
-	opts := slog.HandlerOptions{
-		Level: level,
-	}
-	logger := slog.New(slog.NewTextHandler(w, &opts))
-	slog.SetDefault(logger) // Set this as the global default logger if needed.
-
+// New creates a new logger instance with JSON output and a minimum logging level.
+func New(out io.Writer, minLevel slog.Level) *Logger {
+	handler := slog.NewJSONHandler(out, &slog.HandlerOptions{Level: minLevel})
 	return &Logger{
-		log: logger,
+		logger: slog.New(handler),
 	}
 }
 
-// DefaultLogger initializes a default logger writing to stdout at the INFO level.
-func DefaultLogger() *Logger {
-	return NewLogger(os.Stdout, slog.LevelInfo)
+// PrintInfo logs an informational message with additional properties.
+func (l *Logger) PrintInfo(ctx context.Context, message string, properties map[string]string) {
+	l.log(ctx, slog.LevelInfo, message, properties)
 }
 
-// Info logs an informational message.
-func (l *Logger) Info(msg string, keysAndValues ...any) {
-	l.log.Info(msg, keysAndValues...)
+// PrintError logs an error message with additional properties.
+func (l *Logger) PrintError(ctx context.Context, err error, properties map[string]string) {
+	l.log(ctx, slog.LevelError, err.Error(), properties)
 }
 
-// Error logs an error message.
-func (l *Logger) Error(msg string, keysAndValues ...any) {
-	l.log.Error(msg, keysAndValues...)
+// PrintDebug logs a debug-level message with additional properties.
+func (l *Logger) PrintDebug(ctx context.Context, message string, properties map[string]string) {
+	l.log(ctx, slog.LevelDebug, message, properties)
 }
 
-// Warn logs a warning message.
-func (l *Logger) Warn(msg string, keysAndValues ...any) {
-	l.log.Warn(msg, keysAndValues...)
+// PrintFatal logs a fatal error message, adds a trace, and exits the application.
+func (l *Logger) PrintFatal(ctx context.Context, err error, properties map[string]string) {
+	l.log(ctx, slog.LevelError, err.Error(), properties)
+	os.Exit(1)
 }
 
-// Debug logs a debug message.
-func (l *Logger) Debug(msg string, keysAndValues ...any) {
-	l.log.Debug(msg, keysAndValues...)
+// log handles logging messages at the specified level with optional properties.
+func (l *Logger) log(ctx context.Context, level slog.Level, message string, properties map[string]string) {
+	attrs := make([]slog.Attr, 0, len(properties)+1)
+
+	// Add properties as structured attributes
+	for k, v := range properties {
+		attrs = append(attrs, slog.String(k, v))
+	}
+
+	// Add trace for error and fatal levels
+	if level >= slog.LevelError {
+		attrs = append(attrs, slog.String("trace", string(debug.Stack())))
+	}
+
+	// Log the message
+	l.logger.Log(ctx, level, message, attrs)
 }
