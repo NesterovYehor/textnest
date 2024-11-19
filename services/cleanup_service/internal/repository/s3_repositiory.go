@@ -1,4 +1,4 @@
-package storage
+package repository
 
 import (
 	"context"
@@ -12,13 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-type S3Storage struct {
-	Bucket            string
+type s3Repository struct {
 	S3                *s3.Client
 	s3PresignedClient *s3.PresignClient
 }
 
-func NewS3Storage(bucket, region string) (*S3Storage, error) {
+func NewS3Storage(bucket, region string) (StorageRepository, error) {
 	// Load AWS configuration with specified region
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
@@ -28,29 +27,28 @@ func NewS3Storage(bucket, region string) (*S3Storage, error) {
 	// Initialize the S3 client
 	s3Client := s3.NewFromConfig(cfg)
 
-	return &S3Storage{
-		Bucket: bucket,
+	return &s3Repository{
 		S3:     s3Client,
 	}, nil
 }
 
-func (storage *S3Storage) DeletePaste(key string) error {
+func (storage *s3Repository) DeletePasteByKey(key string, bucket string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	_, err := storage.S3.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(storage.Bucket),
+		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.Printf("Failed to delete object %v:%v. Error: %v\n", storage.Bucket, key, err)
+		log.Printf("Failed to delete object %v:%v. Error: %v\n", bucket, key, err)
 		return err
 	}
 
 	return nil
 }
 
-func (storage *S3Storage) DeleteExpiredPastes(keys []string) error {
+func (storage *s3Repository) DeleteExpiredPastes(keys []string, bucket string) error {
 	if len(keys) == 0 {
 		log.Println("No keys provided for deletion.")
 		return nil
@@ -67,14 +65,14 @@ func (storage *S3Storage) DeleteExpiredPastes(keys []string) error {
 	defer cancel()
 
 	output, err := storage.S3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(storage.Bucket),
+		Bucket: aws.String(bucket),
 		Delete: &types.Delete{
 			Objects: objects,
 			Quiet:   aws.Bool(true),
 		},
 	})
 	if err != nil {
-		log.Printf("Failed to delete objects from bucket %s. Error: %v", storage.Bucket, err)
+		log.Printf("Failed to delete objects from bucket %s. Error: %v", bucket, err)
 		return err
 	}
 

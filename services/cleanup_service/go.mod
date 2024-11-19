@@ -3,12 +3,11 @@ module github.com/NesterovYehor/TextNest/services/cleanup_service
 go 1.23.3
 
 require (
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119022701-19afc4073e4f
 	github.com/aws/aws-sdk-go-v2 v1.32.4
 	github.com/aws/aws-sdk-go-v2/config v1.28.4
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.67.0
 )
-
-require github.com/NesterovYehor/TextNest/pkg v0.0.0-20241118151632-430a56b6f1b4
 
 require (
 	github.com/IBM/sarama v1.43.3
@@ -40,6 +39,7 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/lib/pq v1.10.9
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect

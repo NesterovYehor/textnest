@@ -1,26 +1,22 @@
 package handlers
 
 import (
-	"errors"
+	"context"
 
 	"github.com/IBM/sarama"
-	"github.com/NesterovYehor/TextNest/pkg/validator"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/services"
 )
 
-func HandleDeleteExpiredPaste(message *sarama.ConsumerMessage, repo *repository.PasteRepository) error {
+func HandleDeleteExpiredPaste(ctx context.Context, message *sarama.ConsumerMessage, srv *services.PasteService, log *jsonlog.Logger, bucketName string) error {
 	key := string(message.Value)
 
-	v := validator.New()
-
-	if repo.IsKeyValid(v, key); !v.Valid() {
-		return errors.New("Key is not 8 chars lenth")
-	}
-
-	err := repo.DeletePasteByKey(key)
-	if err != nil {
+	if err := srv.DeletePasteByKey(ctx, key, bucketName); err != nil {
+		log.PrintError(ctx, err, nil)
 		return err
 	}
+
+	log.PrintInfo(ctx, "Expired paste is deleted", nil)
 
 	return nil
 }
