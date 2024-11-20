@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
-	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/keymanager"
 	"github.com/redis/go-redis/v9"
 )
 

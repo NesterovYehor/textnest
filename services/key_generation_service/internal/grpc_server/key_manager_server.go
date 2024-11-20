@@ -8,20 +8,20 @@ import (
 )
 
 // KeyManagerServer now includes a redis.Client
-type KeyManagerServer struct {
+type KeyManagerService struct {
 	UnimplementedKeyManagerServiceServer
 	repo *repository.KeymanagerRepo
 }
 
 // NewKeyManagerServer creates a new KeyManagerServer with a Redis client
-func NewKeyManagerServer(redisClient *redis.Client, repo *repository.KeymanagerRepo) *KeyManagerServer {
-	return &KeyManagerServer{
+func NewKeyManagerServer(redisClient *redis.Client, repo *repository.KeymanagerRepo) *KeyManagerService {
+	return &KeyManagerService{
 		repo: repo,
 	}
 }
 
 // GetKey now uses the Redis client passed in the server struct
-func (s *KeyManagerServer) GetKey(ctx context.Context, req *GetKeyRequest) (*GetKeyResponse, error) {
+func (s *KeyManagerService) GetKey(ctx context.Context, req *GetKeyRequest) (*GetKeyResponse, error) {
 	key, err := s.repo.GetKey() // Pass Redis client to GetKey
 	if err != nil {
 		return &GetKeyResponse{Error: err.Error()}, nil

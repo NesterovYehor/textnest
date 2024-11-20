@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
 	download_service "github.com/NesterovYehor/TextNest/services/download_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
@@ -31,40 +33,52 @@ func openDB(dsn string) (*sql.DB, error) {
 }
 
 func main() {
+	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening log file:", err)
+		return
+	}
+	defer logFile.Close()
+
+	log := jsonlog.New(logFile, slog.LevelInfo)
+
 	// Setup graceful shutdown on SIGINT or SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	// Initialize configuration
-	cfg := config.InitConfig()
+	cfg, err := config.LoadConfig(log, ctx)
+	if err != nil {
+		log.PrintError(ctx, err, nil)
+	}
 
 	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 
 	// Initialize S3 storage
-	storageRepo, err := repository.NewStorageRepository(cfg.Storage.Bucket, cfg.Storage.Bucket)
+	storageRepo, err := repository.NewStorageRepository(cfg.BucketName, cfg.S3Region)
 	if err != nil {
-		log.Fatal(err)
+		log.PrintError(ctx, err, nil)
 		return
 	}
 
 	// Initialize the database connection using openDB function
-	db, err := openDB(cfg.DbUrl) // Make sure cfg.Database.DSN contains your correct DSN
+	db, err := openDB(cfg.DBURL) // Make sure cfg.Database.DSN contains your correct DSN
 	if err != nil {
-		log.Fatal("Failed to connect to the database:", err)
+		log.PrintError(ctx, fmt.Errorf("Failed to connect to the database:", err), nil)
 		return
 	}
 	defer db.Close()
 
 	// Initialize models with the database connection
-	models := repository.NewMetadataRepo(db)
+	metadataRepo := repository.NewMetadataRepo(db)
 
 	// Register the UploadService with the gRPC server
-	download_service.RegisterDownloadServiceServer(grpcSrv.Grpc, download_service.NewDownloadService(storageRepo, models))
+	download_service.RegisterDownloadServiceServer(grpcSrv.Grpc, download_service.NewDownloadService(storageRepo, metadataRepo, log, cfg, ctx))
 
 	// Run the gRPC server
 	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
-		log.Fatal(err)
+		log.PrintFatal(ctx, err, nil)
 		return
 	}
 }

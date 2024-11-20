@@ -8,9 +8,7 @@ import (
 )
 
 type KafkaConsumer struct {
-	brokers  []string
-	groupID  string
-	topics   []string
+	cfg      *KafkaConfig
 	handlers map[string]MessageHandler
 	ctx      context.Context
 	consumer sarama.ConsumerGroup
@@ -20,18 +18,16 @@ type KafkaConsumer struct {
 type MessageHandler func(*sarama.ConsumerMessage) error
 
 // NewKafkaConsumer initializes a Kafka consumer.
-func NewKafkaConsumer(brokers []string, groupID string, topics []string, handlers map[string]MessageHandler, ctx context.Context) (*KafkaConsumer, error) {
+func NewKafkaConsumer(cfg *KafkaConfig, handlers map[string]MessageHandler, ctx context.Context) (*KafkaConsumer, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
-	consumerGroup, err := sarama.NewConsumerGroup(brokers, groupID, config)
+	consumerGroup, err := sarama.NewConsumerGroup(cfg.Brokers, cfg.GroupID, config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &KafkaConsumer{
-		brokers:  brokers,
-		groupID:  groupID,
-		topics:   topics,
+		cfg:      cfg,
 		handlers: handlers,
 		ctx:      ctx,
 		consumer: consumerGroup,
@@ -47,7 +43,7 @@ func (kc *KafkaConsumer) Start() error {
 			log.Println("Kafka consumer shutting down...")
 			return kc.consumer.Close()
 		default:
-			if err := kc.consumer.Consume(kc.ctx, kc.topics, handler); err != nil {
+			if err := kc.consumer.Consume(kc.ctx, kc.cfg.Topics, handler); err != nil {
 				log.Printf("Error in consumer group: %v", err)
 			}
 		}

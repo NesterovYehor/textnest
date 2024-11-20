@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -16,44 +18,67 @@ type DownloadService struct {
 	dbRepo      repository.MetadataRepository
 	storageRepo repository.StorageRepository
 	cfg         *config.Config
+	log         *jsonlog.Logger
+	producer    *kafka.KafkaProducer
 }
 
-func NewDownloadService(storageRepo repository.StorageRepository, dbRepo repository.MetadataRepository) *DownloadService {
+func NewDownloadService(
+	storageRepo repository.StorageRepository,
+	metadataRepo repository.MetadataRepository,
+	log *jsonlog.Logger,
+	cfg *config.Config,
+	ctx context.Context,
+) *DownloadService {
+	producer, err := kafka.NewProducer(*cfg.Kafka, context.Background())
+	if err != nil {
+		log.PrintError(ctx, err, nil)
+		return nil
+	}
 	return &DownloadService{
-		dbRepo:      dbRepo,
+		dbRepo:      metadataRepo,
 		storageRepo: storageRepo,
+		log:         log,
+		cfg:         cfg,
+		producer:    producer,
 	}
 }
 
 func (srv *DownloadService) Download(ctx context.Context, req *DownloadRequest) (*DownloadResponse, error) {
+	// Fetch metadata
 	metadata, err := srv.dbRepo.DownloadPasteMetadata(req.Key)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		srv.log.PrintError(ctx, err, map[string]string{"key": req.Key})
+		return nil, fmt.Errorf("could not fetch metadata: %w", err)
 	}
 
-	if time.Now().After(metadata.ExpiredDate) {
-		producer, err := kafka.NewProducer(*srv.cfg.Kafka, ctx)
+	// Handle expired pastes
+	if isExpired(metadata.ExpiredDate) {
+		err := srv.producer.ProduceMessages(metadata.Key, "delete-expired-paste")
 		if err != nil {
-			return nil, err
+			srv.log.PrintError(ctx, err, map[string]string{"key": req.Key})
+			return nil, fmt.Errorf("failed to produce delete-expired-paste message: %w", err)
 		}
-
-		err = producer.ProduceMessages(metadata.Key, srv.cfg.Kafka.Topics["delete-expired-paste"])
-		if err != nil {
-			return nil, err
-		}
+		srv.log.PrintInfo(ctx, "Produced message to Kafka for expired paste", map[string]string{"key": req.Key})
+		return nil, fmt.Errorf("paste with key %s has expired", req.Key)
 	}
 
-	content, err := srv.storageRepo.DownloadPasteContent(srv.cfg.Storage.Bucket, metadata.Key)
+	// Fetch content
+	content, err := srv.storageRepo.DownloadPasteContent(srv.cfg.BucketName, metadata.Key)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		srv.log.PrintError(ctx, err, map[string]string{"key": req.Key})
+		return nil, fmt.Errorf("could not download paste content: %w", err)
 	}
 
+	// Return response
 	return &DownloadResponse{
 		Key:            req.Key,
 		ExpirationDate: timestamppb.New(metadata.ExpiredDate),
 		CreatedDate:    timestamppb.New(metadata.CreatedAt),
 		Content:        content,
 	}, nil
+}
+
+// Utility function for expiration check
+func isExpired(expiredDate time.Time) bool {
+	return time.Now().After(expiredDate)
 }
