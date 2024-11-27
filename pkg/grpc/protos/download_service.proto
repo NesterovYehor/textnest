@@ -25,3 +25,8 @@ message DownloadResponse {
     bytes content = 4; // The binary content of the downloaded object.
 }
 
+message Metadata {
+    string key = 1;
+    google.protobuf.Timestamp created_at = 2;
+    google.protobuf.Timestamp expired_date = 3;
+}

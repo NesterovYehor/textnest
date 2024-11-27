@@ -10,11 +10,11 @@ import (
 // KeyManagerServer now includes a redis.Client
 type KeyManagerService struct {
 	UnimplementedKeyManagerServiceServer
-	repo *repository.KeymanagerRepo
+	repo *repository.KeyGeneratorRepository
 }
 
 // NewKeyManagerServer creates a new KeyManagerServer with a Redis client
-func NewKeyManagerServer(redisClient *redis.Client, repo *repository.KeymanagerRepo) *KeyManagerService {
+func NewKeyManagerServer(redisClient *redis.Client, repo *repository.KeyGeneratorRepository) *KeyManagerService {
 	return &KeyManagerService{
 		repo: repo,
 	}

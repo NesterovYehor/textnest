@@ -1,37 +1,54 @@
 package config
 
 import (
-	"log"
+	"context"
+	"fmt"
 	"os"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Grpc    *grpc.GrpcConfig
-	Storage struct {
-		Bucket string
-		Region string
-	}
-	DbUrl string
+	Grpc       *grpc.GrpcConfig
+	BucketName string
+	S3Region   string
+	DBURL      string
 }
 
-func InitConfig() *Config {
-	cfg := &Config{} // Initialize cfg
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+// LoadConfig initializes the configuration by loading variables from the .env file and environment.
+func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.PrintError(ctx, err, nil)
 	}
 
 	port := os.Getenv("PORT")
-	host := os.Getenv("HOST")
-	cfg.Storage.Bucket = os.Getenv("BUCKET")
-	cfg.Storage.Region = os.Getenv("REGION")
-	cfg.DbUrl = os.Getenv("DB_URL")
-	cfg.Grpc = &grpc.GrpcConfig{
-		Port: port,
-		Host: host,
+	if port == "" {
+		log.PrintError(ctx, fmt.Errorf("Grpc port not set, using default: 4444"), nil)
+		port = "4444"
 	}
-	return cfg
+	host := os.Getenv("HOST")
+	if host == "" {
+		log.PrintError(ctx, fmt.Errorf("Grpc host not set, using default: 4444"), nil)
+		host = "localhost"
+	}
+
+	dbUrl := os.Getenv("DB_URL")
+	if dbUrl == "" {
+		log.PrintError(ctx, fmt.Errorf("DB_URL not set"), nil)
+		return nil, fmt.Errorf("DB_URL not set")
+	}
+
+	// Return the config struct with the parsed values
+	return &Config{
+		Grpc: &grpc.GrpcConfig{
+			Port: port,
+			Host: host,
+		},
+		BucketName: os.Getenv("S3_BUCKET_NAME"),
+		S3Region:   os.Getenv("S3_REGION"),
+		DBURL:      dbUrl,
+	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"os"
@@ -26,18 +27,19 @@ func main() {
 		return
 	}
 	defer logFile.Close()
+	multiWriter := io.MultiWriter(logFile, os.Stdout)
 
-	log := jsonlog.New(logFile, slog.LevelInfo)
+	log := jsonlog.New(multiWriter, slog.LevelInfo)
 
 	// Create a cancellable context
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(ctx, log)
 	if err != nil {
 		log.PrintFatal(ctx, err, nil)
 	}
-	db, err := openDB("")
+	db, err := openDB(cfg.DBUrl)
 	if err != nil {
 		log.PrintFatal(ctx, err, nil)
 	}

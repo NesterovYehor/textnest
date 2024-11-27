@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -22,11 +21,6 @@ func NewMetadataRepo(db *sql.DB) MetadataRepository {
 
 // DownloadPasteMetadata retrieves metadata for a paste by key
 func (repo *metadataRepo) DownloadPasteMetadata(key string) (*models.Metadata, error) {
-	v := validator.New()
-	if repo.isKeyValid(key, v); !v.Valid() {
-		return nil, errors.New("Key is not valid")
-	}
-
 	query := `
         SELECT key, created_at, expired_date FROM metadata WHERE key = $1
     `
@@ -52,6 +46,6 @@ func (repo *metadataRepo) DownloadPasteMetadata(key string) (*models.Metadata, e
 	return &paste, nil
 }
 
-func (repo *metadataRepo) isKeyValid(key string, v *validator.Validator) {
+func (repo *metadataRepo) IsKeyValid(key string, v *validator.Validator) {
 	v.Check(len([]rune(key)) != 8, "key", "Key must be 8 chars lenth")
 }

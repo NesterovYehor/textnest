@@ -13,18 +13,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const timeout = 5 * time.Second // Define timeout
+var timeout = time.Second * 20
 
-type KeymanagerRepo struct {
+type KeyGeneratorRepository struct {
 	client *redis.Client
 }
 
-func NewRepository(client *redis.Client) *KeymanagerRepo {
-	return &KeymanagerRepo{client: client}
+func NewRepository(client *redis.Client) *KeyGeneratorRepository {
+	return &KeyGeneratorRepository{client: client}
 }
 
 // GetKey retrieves a key from the unused_keys set and moves it to used_keys.
-func (r *KeymanagerRepo) GetKey() (string, error) {
+func (r *KeyGeneratorRepository) GetKey() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -43,14 +43,23 @@ func (r *KeymanagerRepo) GetKey() (string, error) {
 		return "", fmt.Errorf("failed to move key to used_keys: %w", err)
 	}
 
-	// Asynchronously generate new keys to maintain threshold
-	go r.generateKey()
+	errCh := make(chan error)
 
+	// Start a goroutine to generate keys asynchronously
+	go func() {
+		errCh <- r.generateKey()
+		close(errCh) // Close the channel when done
+	}()
+
+	// Check for errors
+	if err := <-errCh; err != nil {
+		return "", fmt.Errorf("failed to generate key: %w", err)
+	}
 	return key, nil
 }
 
 // ReallocateKey moves a key back to the unused_keys set.
-func (r *KeymanagerRepo) ReallocateKey(key string) error {
+func (r *KeyGeneratorRepository) ReallocateKey(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -67,7 +76,7 @@ func (r *KeymanagerRepo) ReallocateKey(key string) error {
 }
 
 // generateKey creates and stores a unique key in unused_keys.
-func (r *KeymanagerRepo) generateKey() error {
+func (r *KeyGeneratorRepository) generateKey() error {
 	const maxRetries = 10
 	retries := 0
 
@@ -101,7 +110,7 @@ func (r *KeymanagerRepo) generateKey() error {
 }
 
 // isMemberOfSet checks if a value exists in a Redis set.
-func (r *KeymanagerRepo) isMemberOfSet(value, setName string) (bool, error) {
+func (r *KeyGeneratorRepository) isMemberOfSet(value, setName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -110,7 +119,7 @@ func (r *KeymanagerRepo) isMemberOfSet(value, setName string) (bool, error) {
 }
 
 // FillKeys ensures that unused_keys meets a minimum threshold.
-func (r *KeymanagerRepo) FillKeys(threshold int64) {
+func (r *KeyGeneratorRepository) FillKeys(threshold int64) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

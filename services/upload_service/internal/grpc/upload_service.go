@@ -3,33 +3,39 @@ package upload_service
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
 
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/pkg/validator"
+	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/storage"
+	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"
+	"github.com/NesterovYehor/TextNest/services/upload_service/internal/validation"
 )
 
 // UploadServer implements the UploadService server.
-type UploadServer struct {
+type UploadService struct {
 	UnimplementedUploadServiceServer // Ensure this is the correct unimplemented server from the generated code
-	storage                          storage.Storage
-	models                           models.Models
+	storageRepo                      repository.StorageRepository
+	metadataRepo                     repository.MetadataRepository
+	cfg                              *config.Config
+	log                              *jsonlog.Logger
 }
 
 // NewUploadServer creates a new instance of UploadServer.
-func NewUploadServer(storage storage.Storage, models models.Models) *UploadServer {
-	return &UploadServer{
-		storage: storage,
-		models:  models,
+func NewUploadService(storageRepo repository.StorageRepository, metadataRepo repository.MetadataRepository, log *jsonlog.Logger, cfg *config.Config) *UploadService {
+	return &UploadService{
+		storageRepo:  storageRepo,
+		metadataRepo: metadataRepo,
+		cfg:          cfg,
+		log:          log,
 	}
 }
 
 // Upload handles the upload request, saving metadata to the database and content to storage.
-func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*UploadResponse, error) {
+func (srv *UploadService) Upload(ctx context.Context, req *UploadRequest) (*UploadResponse, error) {
 	var wg sync.WaitGroup
 	metadata := models.MetaData{
 		Key:            req.Key,
@@ -43,16 +49,16 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 	go func() {
 		defer wg.Done()
 		v := validator.New()
-		if models.IsMetaDataValid(&metadata, v); !v.Valid() {
+		if validation.ValidateMetaData(&metadata, v); !v.Valid() {
 			for _, err := range v.Errors {
 				errCh <- err
 			}
 		}
 
-		if err := srv.models.MetaData.Insert(&metadata); err != nil {
+		if err := srv.metadataRepo.UploadPasteMetadata(&metadata); err != nil {
 			errCh <- err.Error()
 		} else {
-			fmt.Println("Metadata uploaded successfully to DB")
+			srv.log.PrintInfo(ctx, "Metadata uploaded successfully to DB", nil)
 		}
 	}()
 
@@ -60,10 +66,10 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := srv.storage.UploadPaste(metadata.Key, req.Data); err != nil {
+		if err := srv.storageRepo.UploadPasteContent(metadata.Key, srv.cfg.BucketName, req.Data); err != nil {
 			errCh <- err.Error()
 		} else {
-			fmt.Println("Paste uploaded successfully to storage")
+			srv.log.PrintInfo(ctx, "Paste uploaded successfully to storage", nil)
 		}
 	}()
 
@@ -79,7 +85,7 @@ func (srv *UploadServer) Upload(ctx context.Context, req *UploadRequest) (*Uploa
 
 	if len(errorMessages) > 0 {
 		// Log and return the collected error messages
-		log.Printf("Errors during upload: %v", errorMessages)
+		srv.log.PrintError(ctx, fmt.Errorf("Errors during upload: %v", errorMessages), nil)
 		return &UploadResponse{
 			Message: "Error(s) occurred: " + strings.Join(errorMessages, ", "),
 		}, nil

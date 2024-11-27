@@ -10,12 +10,7 @@ import (
 )
 
 func StartRedis(cfg *config.Config) (*redis.Client, error) {
-	redisOpts := redis.Options{
-		Addr:     cfg.RedisOption.Addr,
-		Password: "",
-		DB:       0,
-	}
-	rdb := redis.NewClient(&redisOpts)
+	rdb := redis.NewClient(cfg.RedisOption)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -25,8 +20,6 @@ func StartRedis(cfg *config.Config) (*redis.Client, error) {
 		return nil, err
 	}
 	fmt.Printf("redis server is on: %s\n", cfg.RedisOption.Addr)
-
-	keymanager.FillKeys(rdb, 10)
 
 	return rdb, nil
 }

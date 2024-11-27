@@ -3,71 +3,112 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
+	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
 	upload_service "github.com/NesterovYehor/TextNest/services/upload_service/internal/grpc"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/storage"
+	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-// openDB initializes a new database connection and checks for errors
-func openDB(dsn string) (*sql.DB, error) {
-	// Open the database connection
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify the connection
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-    log.Println("Conected to database:", db)
-
-	return db, nil
-}
-
 func main() {
-	// Setup graceful shutdown on SIGINT or SIGTERM
+	// Set up context for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	// Initialize configuration
-	cfg := config.InitConfig()
-
-	// Initialize gRPC server
-	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-
-	// Initialize S3 storage
-	storage, err := storage.NewS3Storage(cfg.Storage.Bucket, cfg.Storage.Region)
+	// Open log file
+	log, err := setupLogger("app.log")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error initializing logger:", err)
 		return
 	}
 
-	// Initialize the database connection using openDB function
-	db, err := openDB(cfg.DbUrl) // Make sure cfg.Database.DSN contains your correct DSN
+	// Load configuration
+	cfg, err := config.LoadConfig(log, ctx)
 	if err != nil {
-		log.Fatal("Failed to connect to the database:", err)
+		log.PrintFatal(ctx, fmt.Errorf("failed to load configuration: %w", err), nil)
+		return
+	}
+
+	// Initialize database connection
+	db, err := initializeDatabase(cfg.DBURL, log, ctx)
+	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	// Initialize models with the database connection
-	models := models.NewModel(db)
-
-	// Register the UploadService with the gRPC server
-	upload_service.RegisterUploadServiceServer(grpcSrv.Grpc, upload_service.NewUploadServer(storage, models))
-
-	// Run the gRPC server
-	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
-		log.Fatal(err)
+	// Initialize S3 storage
+	storageRepo, err := initializeS3Storage(cfg.BucketName, log, ctx)
+	if err != nil {
+		log.PrintFatal(ctx, err, nil)
 		return
 	}
+
+	// Initialize metadata repository
+	metadataRepo := repository.NewMetadataRepository(db)
+
+	// Initialize gRPC server
+	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
+	uploadService := upload_service.NewUploadService(storageRepo, metadataRepo, log, cfg)
+	upload_service.RegisterUploadServiceServer(grpcSrv.Grpc, uploadService)
+
+	log.PrintInfo(ctx, "Starting gRPC server", nil)
+
+	// Run gRPC server
+	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
+		log.PrintFatal(ctx, fmt.Errorf("gRPC server encountered an error: %w", err), nil)
+		return
+	}
+
+	log.PrintInfo(ctx, "gRPC server shut down gracefully", nil)
+}
+
+// setupLogger initializes the application logger
+func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening log file:", err)
+		logFile.Close()
+		return nil, err
+	}
+	multiWriter := io.MultiWriter(logFile, os.Stdout)
+
+	return jsonlog.New(multiWriter, slog.LevelInfo), nil
+}
+
+// Initializes and verifies database connection.
+func initializeDatabase(dsn string, log *jsonlog.Logger, ctx context.Context) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		log.PrintError(ctx, fmt.Errorf("failed to connect to the database: %w", err), nil)
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	log.PrintInfo(ctx, "Connected to the database", nil)
+	return db, nil
+}
+
+// Initializes S3 storage repository.
+func initializeS3Storage(bucketName string, log *jsonlog.Logger, ctx context.Context) (repository.StorageRepository, error) {
+	storageRepo, err := repository.NewS3Repository(bucketName)
+	if err != nil {
+		log.PrintError(ctx, fmt.Errorf("failed to initialize S3 storage: %w", err), nil)
+		return nil, err
+	}
+	log.PrintInfo(ctx, "S3 storage initialized successfully", nil)
+	return storageRepo, nil
 }

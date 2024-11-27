@@ -1,7 +1,7 @@
 github.com/IBM/sarama v1.43.3 h1:Yj6L2IaNvb2mRBop39N7mmJAHBVY3dTPncr3qGVkxPA=
 github.com/IBM/sarama v1.43.3/go.mod h1:FVIRaLrhK3Cla/9FfRF5X9Zua2KpS3SYIXxhac1H+FQ=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119181523-f939ada4d20e h1:DlGIJ41pLpuZu1QBZz3bV1HoPHGBn69oR3o+y8aFVFA=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119181523-f939ada4d20e/go.mod h1:5TsDTwjK1YycHe4b9OQZsP1mTKStgR8KpRwXQwuiJjs=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241120143923-0919346a6547 h1:NluvVAukhPhi8XlRjsIveNUAjyVa/JjvI5Y002jXKVc=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241120143923-0919346a6547/go.mod h1:5TsDTwjK1YycHe4b9OQZsP1mTKStgR8KpRwXQwuiJjs=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=

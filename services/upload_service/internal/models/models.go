@@ -1,15 +1,9 @@
 package models
 
-import "database/sql"
+import "time"
 
-type Models struct {
-	MetaData MetadataModel
-}
-
-func NewModel(db *sql.DB) Models {
-	return Models{
-		MetaData: MetadataModel{
-			db: db,
-		},
-	}
+type MetaData struct {
+	Key            string    `json: "key"` // Unique identifier for the post (hash)
+	CreatedAt      time.Time `json: "created_at"`
+	ExpirationDate time.Time `json: "expiration_date"`
 }

@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"github.com/IBM/sarama"
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
 	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
@@ -18,65 +21,94 @@ import (
 )
 
 func main() {
+	// Setup signal handling for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	// Initialize configuration
-	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+
+	// Initialize logger
+	log, err := setupLogger("app.log")
 	if err != nil {
-		fmt.Println("Error opening log file:", err)
+		fmt.Println("Error initializing logger:", err)
 		return
 	}
-	defer logFile.Close()
 
-	log := jsonlog.New(logFile, slog.LevelInfo)
+	// Load configuration
+	cfg, err := config.InitConfig(ctx, log)
+	if err != nil {
+		log.PrintError(ctx, fmt.Errorf("failed to load configuration: %v", err), nil)
+		return
+	}
 
-	cfg, err := config.InitConfig()
-
-	var wg sync.WaitGroup
-
-	// Initialize Redis
+	// Initialize Redis client
 	redisClient, err := redis.StartRedis(cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize Redis: %v", err)
+		log.PrintError(ctx, err, nil)
+		return
 	}
-	pong, err := redisClient.Ping(ctx).Result()
-	if err != nil || pong != "PONG" {
-		log.Fatalf("Redis connection failed: %v", err)
-	}
-	log.Println("Successfully connected to Redis")
 
-	// Initialize gRPC Server
-	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-
-	// Initialize Repository
+	// Initialize key management repository
 	repo := repository.NewRepository(redisClient)
+	repo.FillKeys(10) // Ensure a minimum threshold of unused keys
 
-	// Register gRPC Key Manager Service
-	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, key_manager.NewKeyManagerServer(redisClient, repo))
+	// Start gRPC server
+	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
+	keyManagerService := key_manager.NewKeyManagerServer(redisClient, repo)
+	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, keyManagerService)
 
-	// Initialize Kafka Consumer
-	// kafkaConsumer, err := kafka.NewKafkaConsumer(cfg.KafkaConfig.Brokers, cfg.KafkaConfig.ConsumerTopic, repo)
-	if err != nil {
-		log.Fatalf("Failed to create Kafka consumer: %v", err)
-	}
-
-	// Start Kafka Consumer
+	// Start Kafka consumer
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		//if err := kafkaConsumer.Start(ctx); err != nil {
-		//	log.Printf("Kafka consumer encountered an error: %v", err)
-		//}
+		err := startKafkaConsumer(cfg, ctx, repo)
+		if err != nil {
+			log.PrintError(ctx, fmt.Errorf("Kafka consumer error: %v", err), nil)
+		}
+		log.PrintInfo(ctx, "Kafka consumer started", nil)
 	}()
 
-	// Start gRPC Server
+	// Start gRPC server in a separate goroutine
 	go func() {
 		if err := grpcSrv.RunGrpcServer(ctx); err != nil {
-			log.Fatalf("gRPC server encountered an error: %v", err)
+			log.PrintError(ctx, fmt.Errorf("gRPC server error: %v", err), nil)
 		}
 	}()
 
-	// Wait for all goroutines to finish
+	// Wait for all services to finish
 	wg.Wait()
-	log.Println("All services have shut down gracefully.")
+	log.PrintInfo(ctx, "All services have shut down gracefully.", nil)
+}
+
+// setupLogger initializes the application logger
+func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening log file:", err)
+		logFile.Close()
+		return nil, err
+	}
+	multiWriter := io.MultiWriter(logFile, os.Stdout)
+
+	return jsonlog.New(multiWriter, slog.LevelInfo), nil
+}
+
+// startKafkaConsumer initializes and starts the Kafka consumer
+func startKafkaConsumer(cfg *config.Config, ctx context.Context, repo *repository.KeyGeneratorRepository) error {
+	handlers := map[string]kafka.MessageHandler{
+		"delete-expired-paste-topic": func(msg *sarama.ConsumerMessage) error {
+			return repo.ReallocateKey(string(msg.Value))
+		},
+	}
+
+	consumer, err := kafka.NewKafkaConsumer(cfg.Kafka, handlers, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create Kafka consumer: %w", err)
+	}
+
+	if err := consumer.Start(); err != nil {
+		consumer.Close()
+		return fmt.Errorf("Kafka consumer stopped with error: %w", err)
+	}
+
+	return nil
 }

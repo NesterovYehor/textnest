@@ -3,14 +3,14 @@ module github.com/NesterovYehor/TextNest/services/key_generation_service
 go 1.23.3
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119181523-f939ada4d20e
+	github.com/IBM/sarama v1.43.3
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241120143923-0919346a6547
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.2
 )
 
 require (
-	github.com/IBM/sarama v1.43.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
