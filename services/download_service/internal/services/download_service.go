@@ -25,6 +25,7 @@ type DownloadService struct {
 	config        *config.Config
 	logger        *logger.Logger
 	kafkaProducer *kafka.KafkaProducer
+
 	pb.UnimplementedDownloadServiceServer
 }
 

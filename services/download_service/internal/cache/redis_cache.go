@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	middleware "github.com/NesterovYehor/TextNest/services/download_service/internal/middlewares"
+	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/redis/go-redis/v9"
 	"github.com/sony/gobreaker"
 )

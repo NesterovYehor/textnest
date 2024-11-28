@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/NesterovYehor/TextNest/pkg/validator"
-	middleware "github.com/NesterovYehor/TextNest/services/download_service/internal/middlewares"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
 	"github.com/sony/gobreaker"
 )

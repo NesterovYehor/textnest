@@ -3,7 +3,7 @@ module github.com/NesterovYehor/TextNest/services/download_service
 go 1.23.3
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119181523-f939ada4d20e
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241128103100-344d29b50253
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.7.0
@@ -59,5 +59,4 @@ require (
 	github.com/aws/smithy-go v1.22.0 // indirect
 	github.com/lib/pq v1.10.9
 	github.com/sony/gobreaker v1.0.0
-	github.com/sony/gobreaker/v2 v2.0.0
 )
