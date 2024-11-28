@@ -93,7 +93,6 @@ func (svc *DownloadService) getMetadata(ctx context.Context, key string) (*pb.Me
 	cachedMetadata, found, err := svc.fetchMetadataFromCache(key)
 	if err != nil {
 		svc.logger.PrintError(ctx, err, map[string]string{"key": key})
-		return nil, fmt.Errorf("cache error: %w", err)
 	}
 	if found {
 		return cachedMetadata, nil
@@ -114,6 +113,7 @@ func (svc *DownloadService) getMetadata(ctx context.Context, key string) (*pb.Me
 	if cacheErr := svc.metadataCache.Set(key, rawData, time.Minute*10); cacheErr != nil {
 		svc.logger.PrintError(ctx, cacheErr, map[string]string{"key": key})
 	}
+	defer svc.metadataCache.Close()
 
 	return dbMetadata.ToProto(), nil
 }
