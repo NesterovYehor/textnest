@@ -2,3 +2,4 @@
 Dockerfile
 vendor
 main*
+app.log

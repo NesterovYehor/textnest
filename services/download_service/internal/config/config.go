@@ -11,7 +11,6 @@ import (
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -27,11 +26,6 @@ type Config struct {
 
 // LoadConfig loads configuration values from environment variables and the .env file.
 func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
-	// Load environment variables from .env file (if it exists)
-	if err := godotenv.Load(); err != nil {
-		log.PrintError(ctx, fmt.Errorf("Error loading .env file: %v", err), nil)
-	}
-
 	// Fetch and log GRPC server configuration (host and port)
 	grpcHost, grpcPort := getGRPCConfig(log, ctx)
 
@@ -45,8 +39,8 @@ func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
 	dbURL := getRequiredEnvVar("DB_URL", log, ctx)
 
 	// Fetch and validate Redis addresses for metadata and content caches
-	redisMetadataAddr := os.Getenv("REDIS_METADATA_ADDR")
-	redisContentAddr := os.Getenv("REDIS_CONTENT_ADDR")
+	redisMetadataAddr := os.Getenv("METADATA_CACHE_REDIS_HOST")
+	redisContentAddr := os.Getenv("CONTENT_CACHE_REDIS_HOST")
 
 	// Fetch and validate S3 bucket name and region
 	bucketName := os.Getenv("S3_BUCKET_NAME")

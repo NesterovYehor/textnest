@@ -3,3 +3,4 @@ vendor
 Dockerfile
 .dockerignore
 /build
+app.log

@@ -1,6 +1,40 @@
-version: '2'
-
 services:
+  download_service:
+    image: download_service:latest
+    restart: "no"
+    environment:
+      - PORT="7070"
+      - HOST=localhost
+      - DB_URL="postgres://textnest:password@localhost/metadata-dev-db?sslmode=disable"
+      - METADATA_CACHE_REDIS_HOST=metadata_cache_redis
+      - CONTENT_CACHE_REDIS_HOST=content_cache_redis
+      - S3_BUCKET_NAME=textnestbucket
+      - S3_REGION=eu-north-1
+      - AWS_ACCESS_KEY_ID=/run/secrets/aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=/run/secrets/aws_secret_access_key
+      - KAFKA_BROKER="9092"
+      - EXPIRATION_INTERVAL=5m
+      - KAFKA_RETRIES=5
+    depends_on:
+      - metadata_cache_redis
+      - content_cache_redis
+    ports:
+      - "7070:7070"
+  
+  metadata_cache_redis:
+    image: redis:alpine
+    environment:
+      - REDIS_PASSWORD=password
+    ports:
+      - "6377:6379"
+  
+  content_cache_redis:
+    image: redis:alpine
+    environment:
+      - REDIS_PASSWORD=password
+    ports:
+      - "6378:6379"
+  
   zookeeper:
     image: wurstmeister/zookeeper:latest
     ports:
@@ -9,7 +43,7 @@ services:
   kafka:
     image: wurstmeister/kafka:latest
     ports:
-      - "9092:9092"
+      - "9091:9092"
     expose:
       - "9093"
     environment:
@@ -21,3 +55,10 @@ services:
       KAFKA_CREATE_TOPICS: "my-topic:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+secrets:
+  aws_access_key_id:
+    external: true
+  aws_secret_access_key:
+    external: true
+

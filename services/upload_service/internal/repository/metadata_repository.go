@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"time"
 
+	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
+
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
 )
 
 type metadataRepository struct {
-	DB *sql.DB
+	DB      *sql.DB
+	breaker *middleware.CircuitBreakerMiddleware
 }
 
 func NewMetadataRepository(db *sql.DB) MetadataRepository {
