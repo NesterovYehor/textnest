@@ -9,52 +9,71 @@ import (
 	"log"
 	"time"
 
+	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/NesterovYehor/TextNest/pkg/validator"
 	"github.com/redis/go-redis/v9"
+	"github.com/sony/gobreaker"
 )
 
 var timeout = time.Second * 20
 
 type KeyGeneratorRepository struct {
-	client *redis.Client
+	client  *redis.Client
+	breaker *middleware.CircuitBreakerMiddleware
 }
 
 func NewRepository(client *redis.Client) *KeyGeneratorRepository {
-	return &KeyGeneratorRepository{client: client}
+	cbSettings := gobreaker.Settings{
+		Name:        "MetadataRepo",
+		MaxRequests: 5,                // Max requests allowed in half-open state
+		Interval:    5 * time.Second,  // Time window for tracking errors
+		Timeout:     30 * time.Second, // Time to reset the circuit after tripping
+	}
+	return &KeyGeneratorRepository{
+		client:  client,
+		breaker: middleware.NewCircuitBreakerMiddleware(cbSettings),
+	}
 }
 
 // GetKey retrieves a key from the unused_keys set and moves it to used_keys.
-func (r *KeyGeneratorRepository) GetKey() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (r *KeyGeneratorRepository) GetKey(ctx context.Context) (string, error) {
+	var key string
 
-	key, err := r.client.SRandMember(ctx, "unused_keys").Result()
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch key from unused_keys: %w", err)
+	operation := func(ctx context.Context) (any, error) {
+		// Fetch a key from the unused_keys set
+		k, err := r.client.SRandMember(ctx, "unused_keys").Result()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch key from unused_keys: %w", err)
+		}
+		key = k
+
+		// Transactional move: Remove from unused_keys, add to used_keys
+		_, err = r.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.SRem(ctx, "unused_keys", key)
+			pipe.SAdd(ctx, "used_keys", key)
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to move key to used_keys: %w", err)
+		}
+		return nil, nil
 	}
 
-	// Transactional move: Remove from unused_keys, add to used_keys
-	_, err = r.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.SRem(ctx, "unused_keys", key)
-		pipe.SAdd(ctx, "used_keys", key)
-		return nil
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to move key to used_keys: %w", err)
+	// Execute the operation with the circuit breaker
+	if _, err := r.breaker.Execute(ctx, operation); err != nil {
+		return "", err
 	}
 
+	// Generate a new key asynchronously
 	errCh := make(chan error)
-
-	// Start a goroutine to generate keys asynchronously
 	go func() {
 		errCh <- r.generateKey()
-		close(errCh) // Close the channel when done
+		close(errCh)
 	}()
-
-	// Check for errors
 	if err := <-errCh; err != nil {
 		return "", fmt.Errorf("failed to generate key: %w", err)
 	}
+
 	return key, nil
 }
 
@@ -63,14 +82,17 @@ func (r *KeyGeneratorRepository) ReallocateKey(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	// Transactional move: Remove from used_keys, add to unused_keys
-	_, err := r.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.SRem(ctx, "used_keys", key)
-		pipe.SAdd(ctx, "unused_keys", key)
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to reallocate key: %w", err)
+	operation := func(ctx context.Context) (any, error) {
+		_, err := r.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.SRem(ctx, "used_keys", key)
+			pipe.SAdd(ctx, "unused_keys", key)
+			return nil
+		})
+		return nil, err
+	}
+
+	if _, err := r.breaker.Execute(ctx, operation); err != nil {
+		return fmt.Errorf("circuit breaker triggered during reallocate: %w", err)
 	}
 	return nil
 }
@@ -81,7 +103,7 @@ func (r *KeyGeneratorRepository) generateKey() error {
 	retries := 0
 
 	for retries < maxRetries {
-		key := make([]byte, 12) // Longer for uniqueness
+		key := make([]byte, 12)
 		if _, err := rand.Read(key); err != nil {
 			return fmt.Errorf("key generation failed: %w", err)
 		}
@@ -90,19 +112,27 @@ func (r *KeyGeneratorRepository) generateKey() error {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		// Ensure key uniqueness
-		if isUnused, err := r.isMemberOfSet(encodedKey, "unused_keys"); err != nil {
-			return err
-		} else if !isUnused {
-			if isUsed, err := r.isMemberOfSet(encodedKey, "used_keys"); err != nil {
-				return err
-			} else if !isUsed {
-				// Add key if unique
-				if err := r.client.SAdd(ctx, "unused_keys", encodedKey).Err(); err != nil {
-					return fmt.Errorf("failed to store new key: %w", err)
-				}
-				return nil
+		operation := func(ctx context.Context) (any, error) {
+			// Check for key uniqueness
+			isUnused, err := r.isMemberOfSet(encodedKey, "unused_keys")
+			if err != nil || isUnused {
+				return nil, err
 			}
+
+			isUsed, err := r.isMemberOfSet(encodedKey, "used_keys")
+			if err != nil || isUsed {
+				return nil, err
+			}
+
+			// Add key to unused_keys if unique
+			if err := r.client.SAdd(ctx, "unused_keys", encodedKey).Err(); err != nil {
+				return nil, fmt.Errorf("failed to store new key: %w", err)
+			}
+			return nil, nil
+		}
+
+		if _, err := r.breaker.Execute(ctx, operation); err == nil {
+			return nil // Key successfully generated
 		}
 		retries++
 	}

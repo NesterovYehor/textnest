@@ -1,4 +1,43 @@
+networks:
+  textnest_dev_network:
+    driver: bridge
+
 services:
+  key_generation_serivce:
+    image: key_generation_service:latest
+    restart: "no"
+    environment:
+      - PORT=:5055
+      - HOST=localhost
+      - DEVELOPMENT=true
+      - REDIS_ADDR=host.docker.internal:6379
+      - EXPIRATION_INTERVAL=5m
+      - KAFKA_BROKER=localhost:9092
+      - KAFKA_TOPICS=["delete-expired-key-topic", "user-notifications"]
+      - KAFKA_RETRIES=5
+    ports:
+      - "5055:5055"
+    networks:
+      - textnest_dev_network
+
+
+  upload_serivce:
+    image: upload_service:latest
+    restart: "no"
+    environment:
+      - PORT="4545"
+      - HOST=localhost
+      - DB_URL="postgres://textnest:password@localhost/metadata-dev-db?sslmode=disable"
+      - S3_BUCKET_NAME=textnestbucket
+      - S3_REGION=eu-north-1
+      - AWS_ACCESS_KEY_ID=/run/secrets/aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=/run/secrets/aws_secret_access_key
+    ports:
+      - "4545:4545"
+    networks:
+      - textnest_dev_network
+  
+ 
   download_service:
     image: download_service:latest
     restart: "no"
@@ -20,6 +59,8 @@ services:
       - content_cache_redis
     ports:
       - "7070:7070"
+    networks:
+      - textnest_dev_network
   
   metadata_cache_redis:
     image: redis:alpine
@@ -27,23 +68,30 @@ services:
       - REDIS_PASSWORD=password
     ports:
       - "6377:6379"
+    networks:
+      - textnest_dev_network
   
   content_cache_redis:
     image: redis:alpine
     environment:
       - REDIS_PASSWORD=password
     ports:
-      - "6378:6379"
+      - "6375:6379"
+    networks:
+      - textnest_dev_network
+
   
   zookeeper:
     image: wurstmeister/zookeeper:latest
     ports:
       - "2181:2181"
+    networks:
+      - textnest_dev_network
 
   kafka:
     image: wurstmeister/kafka:latest
     ports:
-      - "9091:9092"
+      - "9092:9092"
     expose:
       - "9093"
     environment:
@@ -55,6 +103,8 @@ services:
       KAFKA_CREATE_TOPICS: "my-topic:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - textnest_dev_network
 
 secrets:
   aws_access_key_id:

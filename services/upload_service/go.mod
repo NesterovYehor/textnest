@@ -18,7 +18,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.4 // indirect
 	github.com/aws/smithy-go v1.22.0 // indirect
-	github.com/sony/gobreaker v1.0.0 // indirect
+	github.com/sony/gobreaker v1.0.0
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
@@ -36,6 +36,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.28.3
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.37
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
-	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 )

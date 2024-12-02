@@ -7,7 +7,6 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -19,15 +18,11 @@ type Config struct {
 
 // LoadConfig initializes the configuration by loading variables from the .env file and environment.
 func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
-	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		log.PrintError(ctx, err, nil)
-	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.PrintError(ctx, fmt.Errorf("Grpc port not set, using default: 4444"), nil)
-		port = "4444"
+		log.PrintError(ctx, fmt.Errorf("Grpc port not set, using default: 4545"), nil)
+		port = "4545"
 	}
 	host := os.Getenv("HOST")
 	if host == "" {

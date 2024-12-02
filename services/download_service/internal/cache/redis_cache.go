@@ -21,7 +21,7 @@ func NewRedisCache(ctx context.Context, redisAddr string) Cache {
 	cbSettings := gobreaker.Settings{
 		Name:        "MetadataRepo",
 		MaxRequests: 5,                // Max requests allowed in half-open state
-		Interval:    10 * time.Second, // Time window for tracking errors
+		Interval:    5 * time.Second,  // Time window for tracking errors
 		Timeout:     30 * time.Second, // Time to reset the circuit after tripping
 	}
 

@@ -4,8 +4,6 @@ go 1.23.3
 
 require (
 	github.com/IBM/sarama v1.43.3
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241120143923-0919346a6547
-	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.2
 )
@@ -27,6 +25,7 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/sony/gobreaker v1.0.0
 	golang.org/x/crypto v0.29.0 // indirect
 )
 

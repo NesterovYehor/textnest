@@ -18,6 +18,7 @@ import (
 	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/redis"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/repository"
+	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/services"
 )
 
 func main() {
@@ -52,7 +53,7 @@ func main() {
 
 	// Start gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-	keyManagerService := key_manager.NewKeyManagerServer(redisClient, repo)
+	keyManagerService := services.NewKeyManagerServer(redisClient, repo)
 	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, keyManagerService)
 
 	// Start Kafka consumer
@@ -60,11 +61,10 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := startKafkaConsumer(cfg, ctx, repo)
+		err := startKafkaConsumer(log, cfg, ctx, repo)
 		if err != nil {
 			log.PrintError(ctx, fmt.Errorf("Kafka consumer error: %v", err), nil)
 		}
-		log.PrintInfo(ctx, "Kafka consumer started", nil)
 	}()
 
 	// Start gRPC server in a separate goroutine
@@ -93,7 +93,7 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 }
 
 // startKafkaConsumer initializes and starts the Kafka consumer
-func startKafkaConsumer(cfg *config.Config, ctx context.Context, repo *repository.KeyGeneratorRepository) error {
+func startKafkaConsumer(log *jsonlog.Logger, cfg *config.Config, ctx context.Context, repo *repository.KeyGeneratorRepository) error {
 	handlers := map[string]kafka.MessageHandler{
 		"delete-expired-paste-topic": func(msg *sarama.ConsumerMessage) error {
 			return repo.ReallocateKey(string(msg.Value))
@@ -109,6 +109,8 @@ func startKafkaConsumer(cfg *config.Config, ctx context.Context, repo *repositor
 		consumer.Close()
 		return fmt.Errorf("Kafka consumer stopped with error: %w", err)
 	}
+
+	log.PrintInfo(ctx, "Kafka consumer started", nil)
 
 	return nil
 }

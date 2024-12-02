@@ -16,6 +16,7 @@ import (
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
 	upload_service "github.com/NesterovYehor/TextNest/services/upload_service/internal/grpc"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"
+	"github.com/NesterovYehor/TextNest/services/upload_service/internal/services"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
@@ -56,7 +57,7 @@ func main() {
 
 	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-	uploadService := upload_service.NewUploadService(storageRepo, metadataRepo, log, cfg)
+	uploadService := services.NewUploadService(storageRepo, metadataRepo, log, cfg)
 	upload_service.RegisterUploadServiceServer(grpcSrv.Grpc, uploadService)
 
 	log.PrintInfo(ctx, "Starting gRPC server", nil)
