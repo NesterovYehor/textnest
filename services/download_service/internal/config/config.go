@@ -13,6 +13,12 @@ import (
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 )
 
+const (
+	DefaultGrpcPort = "4545"
+	DefaultGrpcHost = "localhost"
+	DefaultAppEnv   = "dev"
+)
+
 type Config struct {
 	Grpc               *grpc.GrpcConfig
 	ExpirationInterval time.Duration
@@ -36,7 +42,7 @@ func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
 	kafkaConfig := getKafkaConfig(log, ctx)
 
 	// Fetch and validate database URL (must be provided)
-	dbURL := getRequiredEnvVar("DB_URL", log, ctx)
+	dbURL := getDatabaseURL(log, ctx)
 
 	// Fetch and validate Redis addresses for metadata and content caches
 	redisMetadataAddr := os.Getenv("METADATA_CACHE_REDIS_HOST")
@@ -123,11 +129,30 @@ func getKafkaConfig(log *jsonlog.Logger, ctx context.Context) *kafka.KafkaConfig
 	}
 }
 
-// getRequiredEnvVar fetches a required environment variable and logs an error if missing.
-func getRequiredEnvVar(varName string, log *jsonlog.Logger, ctx context.Context) string {
-	value := os.Getenv(varName)
-	if value == "" {
-		log.PrintError(ctx, fmt.Errorf("%s not set", varName), nil)
+
+func getDatabaseURL(log *jsonlog.Logger, ctx context.Context) string {
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = DefaultAppEnv
+		log.PrintInfo(ctx, "APP_ENV not set, defaulting to 'dev'", nil)
 	}
-	return value
+
+	var dbURL string
+	switch env {
+	case "dev":
+		dbURL = os.Getenv("DB_URL_DEV")
+	case "test":
+		dbURL = os.Getenv("DB_URL_TEST")
+	case "prod":
+		dbURL = os.Getenv("DB_URL_PROD")
+	default:
+		log.PrintFatal(ctx, fmt.Errorf("Unknown APP_ENV: %s", env), nil)
+		return ""
+	}
+
+	if dbURL == "" {
+		log.PrintFatal(ctx, fmt.Errorf("Database URL not set for APP_ENV: %s", env), nil)
+	}
+
+	return dbURL
 }

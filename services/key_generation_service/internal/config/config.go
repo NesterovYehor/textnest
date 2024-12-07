@@ -35,8 +35,7 @@ func InitConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 
 	// gRPC Configuration
 	cfg.Grpc = &grpc.GrpcConfig{
-        Port: getEnv("PORT", ":5055"),
-		Host: getEnv("HOST", "localhost"),
+        Port: getEnv("PORT", "5055"),
 	}
 
 	// Expiration Interval

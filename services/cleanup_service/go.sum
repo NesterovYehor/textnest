@@ -1,7 +1,7 @@
 github.com/IBM/sarama v1.43.3 h1:Yj6L2IaNvb2mRBop39N7mmJAHBVY3dTPncr3qGVkxPA=
 github.com/IBM/sarama v1.43.3/go.mod h1:FVIRaLrhK3Cla/9FfRF5X9Zua2KpS3SYIXxhac1H+FQ=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119022701-19afc4073e4f h1:XFFUfDm3pXYVsW6e+FsqGCgCtNk1l92i4vFX8L4WVxY=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20241119022701-19afc4073e4f/go.mod h1:5TsDTwjK1YycHe4b9OQZsP1mTKStgR8KpRwXQwuiJjs=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241202144645-1a903e215b34 h1:yXpT+3nCnL2yilz+ftFzKbN3WbwCMwaXOf/zlUevOTg=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20241202144645-1a903e215b34/go.mod h1:DzjDy2GJQhi0UIEASjyG0dxfGrRl/m+bQ51O3Q+6i1w=
 github.com/aws/aws-sdk-go-v2 v1.32.4 h1:S13INUiTxgrPueTmrm5DZ+MiAo99zYzHEFh1UNkOxNE=
 github.com/aws/aws-sdk-go-v2 v1.32.4/go.mod h1:2SK5n0a2karNTv5tbP1SjsX0uhttou00v/HpXKM1ZUo=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 h1:pT3hpW0cOHRJx8Y0DfJUEQuqPild8jRGmSFmBgvydr0=

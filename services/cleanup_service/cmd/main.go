@@ -37,11 +37,11 @@ func main() {
 
 	cfg, err := config.LoadConfig(ctx, log)
 	if err != nil {
-		log.PrintFatal(ctx, err, nil)
+		log.PrintFatal(ctx, fmt.Errorf("Failed to load config:%v", err), nil)
 	}
 	db, err := openDB(cfg.DBUrl)
 	if err != nil {
-		log.PrintFatal(ctx, err, nil)
+		log.PrintError(ctx, fmt.Errorf("Failed to connect to the database %v:", err), nil)
 	}
 	defer db.Close()
 
@@ -76,7 +76,7 @@ func runKafkaConsumer(cfg *config.Config, ctx context.Context, metadataRepo *rep
 		},
 	}
 
-	consumer, err := kafka.NewKafkaConsumer(cfg.Kafka.Brokers, cfg.Kafka.GroupID, cfg.Kafka.Topics, handlers, ctx)
+	consumer, err := kafka.NewKafkaConsumer(cfg.Kafka, handlers, ctx)
 	if err != nil {
 		log.PrintError(ctx, fmt.Errorf("Failed to create a new Kafka consumer:", err), nil)
 		return err

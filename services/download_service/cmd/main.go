@@ -49,7 +49,7 @@ func main() {
 	// Initialize the database connection using openDB function
 	db, err := openDB(cfg.DBURL) // Make sure cfg.Database.DSN contains your correct DSN
 	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("Failed to connect to the database:", err), nil)
+		log.PrintError(ctx, fmt.Errorf("Failed to connect to the database %v:", err), nil)
 		return
 	}
 	defer db.Close()

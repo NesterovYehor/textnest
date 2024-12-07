@@ -10,8 +10,12 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+)
 
-	"github.com/joho/godotenv"
+const (
+	DefaultGrpcPort = "4545"
+	DefaultGrpcHost = "localhost"
+	DefaultAppEnv   = "dev"
 )
 
 type Config struct {
@@ -24,12 +28,6 @@ type Config struct {
 
 // LoadConfig initializes the configuration by loading variables from the .env file and environment.
 func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
-	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		log.PrintFatal(ctx, err, nil)
-		return nil, err
-	}
-
 	// Parse expiration interval
 	intervalStr := os.Getenv("EXPIRATION_INTERVAL")
 	interval, err := time.ParseDuration(intervalStr)
@@ -57,7 +55,7 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 		// Default to empty map if no topics are specified
 		topics = make([]string, 0, 1)
 	}
-	dbUrl := os.Getenv("DB_URL")
+	dbUrl := getDatabaseURL(log, ctx)
 	if dbUrl == "" {
 		log.PrintError(ctx, fmt.Errorf("DB_URL not set"), nil)
 		return nil, fmt.Errorf("DB_URL not set")
@@ -76,10 +74,38 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 		ExpirationInterval: interval,
 		BucketName:         os.Getenv("S3_BUCKET_NAME"),
 		S3Region:           os.Getenv("S3_REGION"),
+		DBUrl:              dbUrl,
 		Kafka: &kafka.KafkaConfig{
 			Brokers:    brokers,
 			Topics:     topics,
 			MaxRetries: retries,
 		},
 	}, nil
+}
+
+func getDatabaseURL(log *jsonlog.Logger, ctx context.Context) string {
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = DefaultAppEnv
+		log.PrintInfo(ctx, "APP_ENV not set, defaulting to 'dev'", nil)
+	}
+
+	var dbURL string
+	switch env {
+	case "dev":
+		dbURL = os.Getenv("DB_URL_DEV")
+	case "test":
+		dbURL = os.Getenv("DB_URL_TEST")
+	case "prod":
+		dbURL = os.Getenv("DB_URL_PROD")
+	default:
+		log.PrintFatal(ctx, fmt.Errorf("Unknown APP_ENV: %s", env), nil)
+		return ""
+	}
+
+	if dbURL == "" {
+		log.PrintFatal(ctx, fmt.Errorf("Database URL not set for APP_ENV: %s", env), nil)
+	}
+
+	return dbURL
 }

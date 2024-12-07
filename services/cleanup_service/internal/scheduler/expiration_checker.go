@@ -3,13 +3,10 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
-	"github.com/IBM/sarama"
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/NesterovYehor/TextNest/pkg/validator"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
 )
