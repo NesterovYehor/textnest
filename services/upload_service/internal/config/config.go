@@ -7,79 +7,48 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	"gopkg.in/yaml.v3"
 )
 
-const (
-	DefaultGrpcPort = "4545"
-	DefaultGrpcHost = "localhost"
-	DefaultAppEnv   = "dev"
-)
+const DefaultConfigFile = "config_development.yaml"
 
 type Config struct {
-	Grpc       *grpc.GrpcConfig
-	BucketName string
-	S3Region   string
-	DBURL      string
+	Grpc       *grpc.GrpcConfig `yaml:"grpc"`
+	BucketName string           `yaml:"s3.bucket_name"`
+	S3Region   string           `yaml:"region"`
+	DBURL      string           `yaml:"db"`
 }
 
-// LoadConfig initializes the configuration by loading variables from the environment.
+// LoadConfig loads the configuration from a YAML file.
 func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.PrintInfo(ctx, fmt.Sprintf("Grpc port not set, using default: %s", DefaultGrpcPort), nil)
-		port = DefaultGrpcPort
-	}
-	host := os.Getenv("HOST")
-	if host == "" {
-		log.PrintInfo(ctx, fmt.Sprintf("Grpc host not set, using default: %s", DefaultGrpcHost), nil)
-		host = DefaultGrpcHost
+	file := os.Getenv("CONFIG_FILE")
+	if file == "" {
+		file = DefaultConfigFile
 	}
 
-	dbURL := getDatabaseURL(log, ctx)
-	if dbURL == "" {
-		return nil, fmt.Errorf("database URL not set")
+	data, err := os.ReadFile(file)
+	if err != nil {
+		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
+		return nil, err
 	}
 
-	bucketName := os.Getenv("S3_BUCKET_NAME")
-	s3Region := os.Getenv("S3_REGION")
-	if bucketName == "" || s3Region == "" {
-		log.PrintError(ctx, fmt.Errorf("S3 configuration incomplete, some features may be unavailable"), nil)
+	var cfg Config
+	err = yaml.Unmarshal(data, &cfg)
+	if err != nil {
+		log.PrintFatal(ctx, fmt.Errorf("failed to parse configuration file: %w", err), nil)
+		return nil, err
 	}
 
-	return &Config{
-		Grpc: &grpc.GrpcConfig{
-			Port: port,
-			Host: host,
-		},
-		BucketName: bucketName,
-		S3Region:   s3Region,
-		DBURL:      dbURL,
-	}, nil
-}
-
-func getDatabaseURL(log *jsonlog.Logger, ctx context.Context) string {
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = DefaultAppEnv
-		log.PrintInfo(ctx, "APP_ENV not set, defaulting to 'dev'", nil)
+	// Validate required fields
+	if cfg.Grpc == nil || cfg.Grpc.Port == "" {
+		log.PrintFatal(ctx, fmt.Errorf("gRPC configuration is incomplete"), nil)
+	}
+	if cfg.DBURL == "" {
+		log.PrintFatal(ctx, fmt.Errorf("database URL is not set"), nil)
+	}
+	if cfg.BucketName == "" || cfg.S3Region == "" {
+		log.PrintError(ctx, fmt.Errorf("S3 configuration is incomplete, some features may be unavailable"), nil)
 	}
 
-	var dbURL string
-	switch env {
-	case "dev":
-		dbURL = os.Getenv("DB_URL_DEV")
-	case "test":
-		dbURL = os.Getenv("DB_URL_TEST")
-	case "prod":
-		dbURL = os.Getenv("DB_URL_PROD")
-	default:
-		log.PrintFatal(ctx, fmt.Errorf("Unknown APP_ENV: %s", env), nil)
-		return ""
-	}
-
-	if dbURL == "" {
-		log.PrintFatal(ctx, fmt.Errorf("Database URL not set for APP_ENV: %s", env), nil)
-	}
-
-	return dbURL
+	return &cfg, nil
 }

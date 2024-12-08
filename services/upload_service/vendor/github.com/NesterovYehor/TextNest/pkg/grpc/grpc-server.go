@@ -10,14 +10,15 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
-const maxConnectionIdle = 5 * time.Minute
-const maxConnectionAge = 5 * time.Minute
-const gRPCTimeout = 15 * time.Second
-const gRPCTime = 10 * time.Second
+const (
+	maxConnectionIdle = 5 * time.Minute
+	maxConnectionAge  = 5 * time.Minute
+	gRPCTimeout       = 15 * time.Second
+	gRPCTime          = 10 * time.Second
+)
 
 type GrpcConfig struct {
 	Port string `mapstrucTure:"port"`
-	Host string `mapstructure:"host"`
 }
 
 type GrpcServer struct {
@@ -40,32 +41,27 @@ func NewGrpcServer(cfg *GrpcConfig) *GrpcServer {
 }
 
 func (srv *GrpcServer) RunGrpcServer(ctx context.Context) error {
-	address := fmt.Sprintf("%s:%s", srv.Config.Host, srv.Config.Port)
+	address := fmt.Sprintf(":%s", srv.Config.Port)
 	listen, err := net.Listen("tcp", address)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to start gRPC server: %v", err)
 	}
 
+	fmt.Printf("gRPC server is listening on: %s\n", address)
+
+	// Run server in a separate goroutine
 	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				fmt.Printf("shutting down grpc PORT: %s\n", srv.Config.Port)
-				srv.shutdown()
-				fmt.Println("grpc exited properly")
-				return
-			}
+		if err := srv.Grpc.Serve(listen); err != nil {
+			fmt.Printf("[RunGrpcServer] gRPC server serve error: %v\n", err)
 		}
 	}()
 
-	fmt.Printf("grpc server is listening on: %s\n", address)
-
-	err = srv.Grpc.Serve(listen)
-	if err != nil {
-		fmt.Printf("[grpcServer_RunGrpcServer.Serve] grpc server serve error: %+v", err)
-	}
-
-	return err
+	// Wait for context cancellation to stop the server
+	<-ctx.Done()
+	fmt.Printf("Shutting down gRPC server on PORT: %s\n", srv.Config.Port)
+	srv.shutdown()
+	fmt.Println("gRPC server exited properly")
+	return nil
 }
 
 func (srv *GrpcServer) shutdown() {

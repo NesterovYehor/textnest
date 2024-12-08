@@ -30,7 +30,6 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 	assert.Equal(t, "8080", cfg.Grpc.Port)
-	assert.Equal(t, "localhost", cfg.Grpc.Host)
 	assert.Equal(t, "textnestbuycket", cfg.BucketName)
 	assert.Equal(t, "eu-north-1", cfg.S3Region)
 }
