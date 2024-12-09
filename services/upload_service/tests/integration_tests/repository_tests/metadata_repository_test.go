@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NesterovYehor/TextNest/pkg/test/container"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"
 	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/stretchr/testify/assert"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 func TestUploadPasteMetadata(t *testing.T) {
@@ -18,7 +18,7 @@ func TestUploadPasteMetadata(t *testing.T) {
 	defer cancel()
 
 	// Start a PostgreSQL container
-	postgresContainer, err := container.Start(ctx, t)
+	postgresContainer, err := Start(ctx, t)
 	assert.Nil(t, err)
 
 	// Create metadata table
@@ -52,5 +52,24 @@ func TestUploadPasteMetadata(t *testing.T) {
 	// Test the UploadPasteMetadata method
 	err = metadataRepo.UploadPasteMetadata(ctx, metadata)
 	assert.Nil(t, err)
+}
 
+type PostgresContainer struct {
+	postgres.PostgresContainer
+}
+
+func Start(ctx context.Context, t *testing.T) (*PostgresContainer, error) {
+	postgresContainer, err := postgres.Run(
+		ctx,
+		"postgres:16-alpine",
+		postgres.WithDatabase("test_db"),
+		postgres.WithUsername("testcontainer"),
+		postgres.WithPassword("testcontainer"),
+		postgres.BasicWaitStrategies(),
+		postgres.WithSQLDriver("pgx"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &PostgresContainer{*postgresContainer}, nil
 }

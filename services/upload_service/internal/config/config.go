@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"gopkg.in/yaml.v3"
 )
 
-const DefaultConfigFile = "config_development.yaml"
+const DefaultConfigFile = "config.yaml"
 
 type Config struct {
-	Grpc       *grpc.GrpcConfig `yaml:"grpc"`
-	BucketName string           `yaml:"s3.bucket_name"`
-	S3Region   string           `yaml:"region"`
-	DBURL      string           `yaml:"db"`
+    Grpc struct {
+        Port string `yaml:"port"`
+        Host string `yaml:"host"`
+    } `yaml:"grpc"`
+    DBURL      string `yaml:"db"`
+    BucketName string `yaml:"s3.bucket_name"`
+    S3Region   string `yaml:"region"`
 }
 
 // LoadConfig loads the configuration from a YAML file.
@@ -26,14 +28,16 @@ func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
 		file = DefaultConfigFile
 	}
 
-	data, err := os.ReadFile(file)
+	data, err := os.Open(file)
 	if err != nil {
 		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
 		return nil, err
 	}
+	defer data.Close()
 
 	var cfg Config
-	err = yaml.Unmarshal(data, &cfg)
+	decoder := yaml.NewDecoder(data)
+	err = decoder.Decode(&cfg)
 	if err != nil {
 		log.PrintFatal(ctx, fmt.Errorf("failed to parse configuration file: %w", err), nil)
 		return nil, err
