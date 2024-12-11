@@ -9,7 +9,7 @@ import (
 )
 
 type RedisContainerOpts struct {
-	addr int
+	Addr int
 }
 
 type RedisContainer struct {
@@ -19,7 +19,7 @@ type RedisContainer struct {
 func StartRedis(ctx context.Context, opts *RedisContainerOpts, t *testing.T) (*RedisContainer, error) {
 	redisContainer, err := redis.Run(ctx,
 		"redis:7",
-		testcontainers.WithHostPortAccess(opts.addr),
+		testcontainers.WithHostPortAccess(opts.Addr),
 	)
 	if err != nil {
 		return nil, err
