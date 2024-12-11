@@ -1,10 +1,10 @@
 package kafka
 
 type KafkaConfig struct {
-	Brokers    []string
-	Topics     []string
-	GroupID    string
-	MaxRetries int
+	Brokers    []string `yaml:"brokers"`
+	Topics     []string `yaml:"topics"`
+	GroupID    string   `yaml:"groupID"`
+	MaxRetries int      `yaml:"maxRetries"`
 }
 
 func LoadKafkaConfig(brokers []string, topics []string, groupID string, maxRetries int) *KafkaConfig {

@@ -1,7 +1,0 @@
-grpc:
-  port: ":8080"
-  host: "localhost"
-db: "postgres://test_user:test_password@postgres_test:5432/test_db?sslmode=disable"
-s3:
-  bucket_name: "textnestbuycket"
-region: "eu-north-1"

@@ -2,96 +2,60 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/redis/go-redis/v9"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Grpc        *grpc.GrpcConfig
-	Kafka       *kafka.KafkaConfig
-	RedisOption *redis.Options
+	Grpc        *grpc.GrpcConfig   `yaml:"grpc"`
+	Kafka       kafka.KafkaConfig `yaml:"kafka"`
+	RedisOption *redis.Options     `yaml:"redis"`
 
-	ExpirationInterval time.Duration
+    ExpirationInterval time.Duration `yaml:"expirationInterval"`
 }
 
-func InitConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
-	cfg := &Config{}
+func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
+	os.Setenv("CONFIG_PATH", "./test_data/config_test.yaml")
+	defer os.Unsetenv("CONFIG_PATH")
 
-	// Redis Configuration
-	redisAddr := getEnv("REDIS_ADDR", "localhost:6378")
-	log.PrintInfo(ctx, "Connecting to Redis...", map[string]string{"redis_address": redisAddr})
-	cfg.RedisOption = &redis.Options{Addr: redisAddr}
-
-	redisClient := redis.NewClient(cfg.RedisOption)
-	defer redisClient.Close()
-
-	// gRPC Configuration
-	cfg.Grpc = &grpc.GrpcConfig{
-        Port: getEnv("PORT", "5055"),
+	// Read CONFIG_PATH from environment
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		return nil, fmt.Errorf("CONFIG_PATH environment variable is not set")
 	}
-
-	// Expiration Interval
-	intervalStr := getEnv("EXPIRATION_INTERVAL", "5m")
-	interval, err := time.ParseDuration(intervalStr)
+	data, err := os.Open(path)
 	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("invalid EXPIRATION_INTERVAL"), map[string]string{
-			"interval": intervalStr,
-		})
-		return nil, fmt.Errorf("invalid EXPIRATION_INTERVAL: %v", err)
+		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
+		return nil, err
 	}
-	cfg.ExpirationInterval = interval
+	defer data.Close()
 
-	// Kafka Configuration
-	brokers := []string{getEnv("KAFKA_BROKER", "localhost:9092")}
-
-	// Fetch Kafka topics
-	topicsStr := getEnv("KAFKA_TOPICS", "[\"delete-expired-key-topic\", \"user-notifications\"]")
-	if topicsStr == "" {
-		log.PrintError(ctx, fmt.Errorf("KAFKA_TOPICS is empty"), nil)
-		return nil, fmt.Errorf("KAFKA_TOPICS must be a non-empty JSON array")
-	}
-
-	var topics []string
-	if err := json.Unmarshal([]byte(topicsStr), &topics); err != nil || len(topics) == 0 {
-		log.PrintError(ctx, fmt.Errorf("failed to parse KAFKA_TOPICS"), map[string]string{
-			"topics_raw": topicsStr,
-			"error":      err.Error(),
-		})
-		return nil, fmt.Errorf("invalid or empty KAFKA_TOPICS: %v", err)
-	}
-	log.PrintInfo(ctx, fmt.Sprintf("Parsed Kafka Topics: %v", topics), nil)
-
-	retriesStr := getEnv("KAFKA_RETRIES", "5")
-	retries, err := strconv.Atoi(retriesStr)
+	var cfg Config
+	decoder := yaml.NewDecoder(data)
+	err = decoder.Decode(&cfg)
 	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("invalid KAFKA_RETRIES"), map[string]string{
-			"retries_raw": retriesStr,
-		})
-		return nil, fmt.Errorf("invalid KAFKA_RETRIES: %v", err)
-	}
-	cfg.Kafka = &kafka.KafkaConfig{
-		Brokers:    brokers,
-		Topics:     topics,
-		MaxRetries: retries,
-		GroupID:    "1",
+		log.PrintFatal(ctx, fmt.Errorf("failed to parse configuration file: %w", err), nil)
+		return nil, err
 	}
 
-
-	return cfg, nil
-}
-
-// Helper function to fetch environment variables with a default value
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	// Validate required fields
+	if cfg.Grpc == nil || cfg.Grpc.Port == "" {
+		log.PrintFatal(ctx, fmt.Errorf("gRPC configuration is incomplete"), nil)
 	}
-	return defaultValue
+	if len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
+		log.PrintInfo(ctx, fmt.Sprintf("%+v\n", cfg.Kafka), nil)
+		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
+	}
+	if cfg.RedisOption == nil || cfg.RedisOption.Addr == "" {
+		log.PrintFatal(ctx, fmt.Errorf("redis configuration is incomplete"), nil)
+	}
+
+	return &cfg, nil
 }

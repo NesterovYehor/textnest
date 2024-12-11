@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
+	github.com/testcontainers/testcontainers-go/modules/redis v0.34.0
 	google.golang.org/grpc v1.67.1
 )
 

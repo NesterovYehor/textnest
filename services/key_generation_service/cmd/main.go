@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// Load configuration
-	cfg, err := config.InitConfig(ctx, log)
+	cfg, err := config.LoadConfig(ctx, log)
 	if err != nil {
 		log.PrintError(ctx, fmt.Errorf("failed to load configuration: %v", err), nil)
 		return

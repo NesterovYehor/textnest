@@ -18,7 +18,7 @@ const (
 )
 
 type GrpcConfig struct {
-	Port string `mapstrucTure:"port"`
+	Port string `yaml:"port"`
 }
 
 type GrpcServer struct {

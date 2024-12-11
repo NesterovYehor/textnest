@@ -6,8 +6,8 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+    "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/sony/gobreaker"
@@ -25,7 +25,7 @@ func NewS3Repository(region string) (StorageRepository, error) {
 	}
 	s3Client := s3.NewFromConfig(cfg)
 	cbSettings := gobreaker.Settings{
-		Name:        "MetadataRepo",
+		Name:        "ContentRepo",
 		MaxRequests: 5,                // Max requests allowed in half-open state
 		Interval:    30 * time.Second, // Time window for tracking errors
 		Timeout:     60 * time.Second, // Time to reset the circuit after tripping

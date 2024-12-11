@@ -1,0 +1,15 @@
+grpc:
+  port: ":5555"
+
+redis:
+  addr: "localhost:6378"
+
+expirationInterval: "5m"
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topics:
+    - "delete-expired-key-topic"
+    - "user-notifications"
+  maxRetries: 5

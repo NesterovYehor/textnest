@@ -37,6 +37,9 @@ var grpcResponse = &pb.UploadResponse{
 func TestUploadService_Upload(t *testing.T) {
 	// Set up the test logger and configuration
 	log := jsonlog.New(os.Stdout, slog.LevelInfo) // Changed to os.Stdout for visible logs
+	os.Setenv("CONFIG_PATH", "../test_data/config.development.yaml")
+	defer os.Unsetenv("CONFIG_PATH")
+
 	cfg, err := config.LoadConfig(log, context.Background())
 	if err != nil {
 		log.PrintFatal(context.Background(), fmt.Errorf("failed to load config: %w", err), nil)

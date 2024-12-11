@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"gopkg.in/yaml.v3"
 )
@@ -12,23 +13,20 @@ import (
 const DefaultConfigFile = "config.yaml"
 
 type Config struct {
-    Grpc struct {
-        Port string `yaml:"port"`
-        Host string `yaml:"host"`
-    } `yaml:"grpc"`
-    DBURL      string `yaml:"db"`
-    BucketName string `yaml:"s3.bucket_name"`
-    S3Region   string `yaml:"region"`
+	Grpc       *grpc.GrpcConfig `yaml:"grpc"`
+	BucketName string           `yaml:"bucket_name"`
+	S3Region   string           `yaml:"region"`
+	DBURL      string           `yaml:"db"`
 }
 
 // LoadConfig loads the configuration from a YAML file.
 func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
-	file := os.Getenv("CONFIG_FILE")
-	if file == "" {
-		file = DefaultConfigFile
+	// Read CONFIG_PATH from environment
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		return nil, fmt.Errorf("CONFIG_PATH environment variable is not set")
 	}
-
-	data, err := os.Open(file)
+	data, err := os.Open(path)
 	if err != nil {
 		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
 		return nil, err

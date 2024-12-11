@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -28,6 +27,3 @@ func Start(ctx context.Context, t *testing.T) (*PostgresContainer, error) {
 	return &PostgresContainer{*postgresContainer}, nil
 }
 
-func PrintPenis()(){
-    fmt.Println("PENIS")
-}
