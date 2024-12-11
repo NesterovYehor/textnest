@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"testing"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/redis"
@@ -16,7 +15,7 @@ type RedisContainer struct {
 	*redis.RedisContainer
 }
 
-func StartRedis(ctx context.Context, opts *RedisContainerOpts, t *testing.T) (*RedisContainer, error) {
+func StartRedis(ctx context.Context, opts *RedisContainerOpts) (*RedisContainer, error) {
 	redisContainer, err := redis.Run(ctx,
 		"redis:7",
 		testcontainers.WithHostPortAccess(opts.Addr),
