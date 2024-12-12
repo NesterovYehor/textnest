@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"testing"
+	"time"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
@@ -42,6 +43,6 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, "test_db_url", cfg.DBURL)
 	assert.Equal(t, ":0000", cfg.RedisMetadataAddr)
 	assert.Equal(t, ":0000", cfg.RedisContentAddr)
-	assert.Equal(t, 1, cfg.Kafka.MaxRetries)
-	assert.Equal(t, "0s", cfg.ExpirationInterval)
+	assert.Equal(t, 0, cfg.Kafka.MaxRetries)
+	assert.Equal(t, time.Duration(0), cfg.ExpirationInterval)
 }

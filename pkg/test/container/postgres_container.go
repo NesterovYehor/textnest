@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"testing"
 
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
@@ -11,7 +10,7 @@ type PostgresContainer struct {
 	postgres.PostgresContainer
 }
 
-func Start(ctx context.Context, t *testing.T) (*PostgresContainer, error) {
+func StartPostgres(ctx context.Context) (*PostgresContainer, error) {
 	postgresContainer, err := postgres.Run(
 		ctx,
 		"postgres:16-alpine",

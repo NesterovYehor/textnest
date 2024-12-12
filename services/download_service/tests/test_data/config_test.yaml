@@ -5,10 +5,10 @@ kafka:
     - "localhost:0000"
   topics:
     - "test-kafka-topic"
+  max_retries: 1
 bucket_name: "testbucket"
 region: "test-region"
 db_url: "test_db_url"
 metadata_cache_addr: ":0000"
 content_cache_addr: ":0000"
-maxRetries: "1"
 expirationInterval: "0s"
