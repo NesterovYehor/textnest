@@ -5,7 +5,6 @@ import (
 
 	pb "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 // KeyManagerServer now includes a redis.Client
@@ -15,7 +14,7 @@ type KeyManagerService struct {
 }
 
 // NewKeyManagerServer creates a new KeyManagerServer with a Redis client
-func NewKeyManagerServer(redisClient *redis.Client, repo *repository.KeyGeneratorRepository) *KeyManagerService {
+func NewKeyManagerServer(repo *repository.KeyGeneratorRepository) *KeyManagerService {
 	return &KeyManagerService{
 		repo: repo,
 	}

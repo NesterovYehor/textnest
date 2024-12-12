@@ -53,7 +53,7 @@ func main() {
 
 	// Start gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-	keyManagerService := services.NewKeyManagerServer(redisClient, repo)
+	keyManagerService := services.NewKeyManagerServer(repo)
 	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, keyManagerService)
 
 	// Start Kafka consumer

@@ -22,9 +22,6 @@ type Config struct {
 }
 
 func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
-	os.Setenv("CONFIG_PATH", "./test_data/config_test.yaml")
-	defer os.Unsetenv("CONFIG_PATH")
-
 	// Read CONFIG_PATH from environment
 	path := os.Getenv("CONFIG_PATH")
 	if path == "" {

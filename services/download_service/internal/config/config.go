@@ -2,157 +2,63 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-)
-
-const (
-	DefaultGrpcPort = "4545"
-	DefaultGrpcHost = "localhost"
-	DefaultAppEnv   = "dev"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Grpc               *grpc.GrpcConfig
-	ExpirationInterval time.Duration
-	BucketName         string
-	S3Region           string
-	Kafka              *kafka.KafkaConfig
-	DBURL              string
-	RedisMetadataAddr  string
-	RedisContentAddr   string
+	Grpc              *grpc.GrpcConfig  `yaml:"grpc"`
+	Kafka             kafka.KafkaConfig `yaml:"kafka"`
+    BucketName        string            `yaml:"bucket_name"`
+	S3Region          string            `yaml:"region"`
+	DBURL             string            `yaml:"db_url"`
+	RedisMetadataAddr string            `yaml:"metadata_cache_addr"`
+	RedisContentAddr  string            `yaml:"content_cache_addr"`
+
+	ExpirationInterval time.Duration `yaml:"expirationInterval"`
 }
 
 // LoadConfig loads configuration values from environment variables and the .env file.
 func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
-	// Fetch and log GRPC server configuration (host and port)
-	grpcHost, grpcPort := getGRPCConfig(log, ctx)
-
-	// Fetch and parse expiration interval (default 5 minutes if invalid)
-	expirationInterval := getExpirationInterval(log, ctx)
-
-	// Fetch and validate Kafka brokers and retry settings
-	kafkaConfig := getKafkaConfig(log, ctx)
-
-	// Fetch and validate database URL (must be provided)
-	dbURL := getDatabaseURL(log, ctx)
-
-	// Fetch and validate Redis addresses for metadata and content caches
-	redisMetadataAddr := os.Getenv("METADATA_CACHE_REDIS_HOST")
-	redisContentAddr := os.Getenv("CONTENT_CACHE_REDIS_HOST")
-
-	// Fetch and validate S3 bucket name and region
-	bucketName := os.Getenv("S3_BUCKET_NAME")
-	s3Region := os.Getenv("S3_REGION")
-
-	// Return populated config struct
-	return &Config{
-		Grpc: &grpc.GrpcConfig{
-			Port: grpcPort,
-			Host: grpcHost,
-		},
-		RedisMetadataAddr:  redisMetadataAddr,
-		RedisContentAddr:   redisContentAddr,
-		ExpirationInterval: expirationInterval,
-		DBURL:              dbURL,
-		BucketName:         bucketName,
-		S3Region:           s3Region,
-		Kafka:              kafkaConfig,
-	}, nil
-}
-
-// getGRPCConfig fetches GRPC host and port, with default values if missing.
-func getGRPCConfig(log *jsonlog.Logger, ctx context.Context) (string, string) {
-	host := os.Getenv("HOST")
-	if host == "" {
-		log.PrintError(ctx, fmt.Errorf("GRPC host not set, using default: localhost"), nil)
-		host = "localhost"
+	// Read CONFIG_PATH from environment
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		return nil, fmt.Errorf("CONFIG_PATH environment variable is not set")
 	}
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.PrintError(ctx, fmt.Errorf("GRPC port not set, using default: 4444"), nil)
-		port = "4444"
+	data, err := os.Open(path)
+	if err != nil {
+		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
+		return nil, err
 	}
-	return host, port
-}
+	defer data.Close()
 
-// getExpirationInterval fetches the expiration interval, defaulting to 5 minutes if invalid.
-func getExpirationInterval(log *jsonlog.Logger, ctx context.Context) time.Duration {
-	intervalStr := os.Getenv("EXPIRATION_INTERVAL")
-	interval, err := time.ParseDuration(intervalStr)
-	if err != nil || interval == 0 {
-		log.PrintError(ctx, fmt.Errorf("Invalid or missing EXPIRATION_INTERVAL. Using default: 5m. Error: %v", err), nil)
-		interval = 5 * time.Minute
+	var cfg Config
+	decoder := yaml.NewDecoder(data)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		log.PrintFatal(ctx, fmt.Errorf("failed to parse configuration file: %w", err), nil)
+		return nil, err
 	}
-	return interval
-}
-
-// getKafkaConfig fetches Kafka configuration including brokers, topics, and retries.
-func getKafkaConfig(log *jsonlog.Logger, ctx context.Context) *kafka.KafkaConfig {
-	// Fetch Kafka brokers
-	brokers := []string{os.Getenv("KAFKA_BROKER")}
-	if brokers[0] == "" {
-		log.PrintError(ctx, fmt.Errorf("KAFKA_BROKER not set, using default: localhost:9092"), nil)
-		brokers[0] = "localhost:9092"
+	// Validate required fields
+	if cfg.Grpc == nil || cfg.Grpc.Port == "" {
+		log.PrintFatal(ctx, fmt.Errorf("gRPC configuration is incomplete"), nil)
 	}
-
-	// Parse Kafka topics
-	kafkaTopics := os.Getenv("KAFKA_TOPICS")
-	var topics []string
-	if kafkaTopics != "" {
-		err := json.Unmarshal([]byte(kafkaTopics), &topics)
-		if err != nil {
-			log.PrintError(ctx, fmt.Errorf("Failed to unmarshal KAFKA_TOPICS: %w", err), nil)
-			topics = []string{}
-		}
+	if len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
+		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
 	}
-
-	// Fetch Kafka retry settings
-	retryStr := os.Getenv("KAFKA_RETRIES")
-	retries, err := strconv.Atoi(retryStr)
-	if err != nil || retries <= 0 {
-		log.PrintError(ctx, fmt.Errorf("Invalid or missing KAFKA_RETRIES. Using default: 5. Error: %v", err), nil)
-		retries = 5
+	if cfg.BucketName == "" || cfg.S3Region == "" {
+		log.PrintInfo(ctx, cfg.BucketName, nil)
+		log.PrintInfo(ctx, cfg.S3Region, nil)
+		log.PrintFatal(ctx, fmt.Errorf("S3 configuration is incomplete"), nil)
 	}
-
-	return &kafka.KafkaConfig{
-		Brokers:    brokers,
-		Topics:     topics,
-		MaxRetries: retries,
+	if cfg.RedisContentAddr == "" || cfg.RedisMetadataAddr == "" {
+		log.PrintFatal(ctx, fmt.Errorf("redis cahce configuration is incomplete"), nil)
 	}
-}
-
-
-func getDatabaseURL(log *jsonlog.Logger, ctx context.Context) string {
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = DefaultAppEnv
-		log.PrintInfo(ctx, "APP_ENV not set, defaulting to 'dev'", nil)
-	}
-
-	var dbURL string
-	switch env {
-	case "dev":
-		dbURL = os.Getenv("DB_URL_DEV")
-	case "test":
-		dbURL = os.Getenv("DB_URL_TEST")
-	case "prod":
-		dbURL = os.Getenv("DB_URL_PROD")
-	default:
-		log.PrintFatal(ctx, fmt.Errorf("Unknown APP_ENV: %s", env), nil)
-		return ""
-	}
-
-	if dbURL == "" {
-		log.PrintFatal(ctx, fmt.Errorf("Database URL not set for APP_ENV: %s", env), nil)
-	}
-
-	return dbURL
+	return &cfg, nil
 }
