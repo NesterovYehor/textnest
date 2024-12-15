@@ -36,7 +36,7 @@ func (repo *metadataRepo) DownloadPasteMetadata(key string) (*models.Metadata, e
 	// Define the operation to be executed with Circuit Breaker
 	operation := func(ctx context.Context) (any, error) {
 		query := `
-            SELECT key, created_at, expired_date FROM metadata WHERE key = $1
+            SELECT key, created_at, expiration_date FROM metadata WHERE key = $1
         `
 		var paste models.Metadata
 

@@ -3,7 +3,7 @@ module github.com/NesterovYehor/TextNest/services/download_service
 go 1.23.3
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241212030230-656bcbc922a3
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241212132321-26077b133f30
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.0
 	github.com/redis/go-redis/v9 v9.7.0
 	google.golang.org/grpc v1.68.1
@@ -51,8 +51,8 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -90,6 +90,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/aws/aws-sdk-go-v2 v1.32.6
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.7 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.28.6
@@ -102,6 +103,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.6 // indirect
 	github.com/aws/smithy-go v1.22.1 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/sony/gobreaker v1.0.0
 	github.com/stretchr/testify v1.10.0

@@ -33,18 +33,15 @@ func NewDownloadService(
 	storageRepo repository.StorageRepository,
 	metadataRepo repository.MetadataRepository,
 	logger *logger.Logger,
-	config *config.Config,
 	ctx context.Context,
+	redisMetadataAddr string,
+	redisContentAddr string,
+	kafkaCfg kafka.KafkaConfig,
 ) (*DownloadService, error) {
-	if config.Kafka == nil || config.BucketName == "" {
-		logger.PrintError(ctx, fmt.Errorf("invalid configuration"), nil)
-		return nil, fmt.Errorf("invalid configuration: Kafka or BucketName missing")
-	}
+	metadataCache := cache.NewRedisCache(ctx, redisMetadataAddr)
+	contentCache := cache.NewRedisCache(ctx, redisContentAddr)
 
-	metadataCache := cache.NewRedisCache(ctx, config.RedisMetadataAddr)
-	contentCache := cache.NewRedisCache(ctx, config.RedisContentAddr)
-
-	producer, err := kafka.NewProducer(*config.Kafka, ctx)
+	producer, err := kafka.NewProducer(kafkaCfg, ctx)
 	if err != nil {
 		logger.PrintError(ctx, err, nil)
 		return nil, fmt.Errorf("failed to initialize Kafka producer: %w", err)
@@ -54,7 +51,6 @@ func NewDownloadService(
 		metadataRepo:  metadataRepo,
 		storageRepo:   storageRepo,
 		logger:        logger,
-		config:        config,
 		kafkaProducer: producer,
 		metadataCache: metadataCache,
 		contentCache:  contentCache,
