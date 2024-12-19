@@ -93,24 +93,35 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 }
 
 // startKafkaConsumer initializes and starts the Kafka consumer
+// main.go
+
+// startKafkaConsumer initializes and starts the Kafka consumer
 func startKafkaConsumer(log *jsonlog.Logger, cfg *config.Config, ctx context.Context, repo *repository.KeyGeneratorRepository) error {
 	handlers := map[string]kafka.MessageHandler{
 		"delete-expired-paste-topic": func(msg *sarama.ConsumerMessage) error {
+			// Additional logging for context
+			log.PrintInfo(ctx, fmt.Sprintf("Consumed message from topic %s: %s", msg.Topic, string(msg.Value)), nil)
 			return repo.ReallocateKey(string(msg.Value))
 		},
 	}
 
-	consumer, err := kafka.NewKafkaConsumer(cfg.Kafka, handlers, ctx)
+	consumer, err := kafka.NewKafkaConsumer(&cfg.Kafka, handlers, ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create Kafka consumer: %w", err)
 	}
 
+	// Ensure graceful shutdown by capturing context
+	go func() {
+		<-ctx.Done()
+		log.PrintInfo(ctx, "Shutting down Kafka consumer...", nil)
+		consumer.Close() // Ensure proper closing of the consumer
+	}()
+
 	if err := consumer.Start(); err != nil {
-		consumer.Close()
+		consumer.Close() // Make sure the consumer is closed if an error occurs
 		return fmt.Errorf("Kafka consumer stopped with error: %w", err)
 	}
 
 	log.PrintInfo(ctx, "Kafka consumer started", nil)
-
 	return nil
 }

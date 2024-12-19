@@ -1,15 +1,15 @@
 grpc:
-  port: ":5555"
+  port: "5555"
 
-redis:
-  addr: "localhost:6378"
+redis: "redis:6379"
 
 expirationInterval: "5m"
 
 kafka:
   brokers:
-    - "localhost:9092"
+    - "kafka:9092"
   topics:
-    - "delete-expired-key-topic"
-    - "user-notifications"
-  maxRetries: 5
+    - "delete-expired-paste-topic"
+  groupID: "no-group"
+  maxRetries: 5  # Make sure this is a sensible value for your retries.
+

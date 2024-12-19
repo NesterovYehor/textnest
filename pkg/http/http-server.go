@@ -24,7 +24,7 @@ func NewConfig(port string) *Config {
 	}
 }
 
-func RunServer(ctx *context.Context, cfg *Config, handler http.Handler) error {
+func RunServer(ctx context.Context, cfg *Config, handler http.Handler) error {
 	srv := http.Server{
 		Addr:         cfg.Port,
 		Handler:      handler,

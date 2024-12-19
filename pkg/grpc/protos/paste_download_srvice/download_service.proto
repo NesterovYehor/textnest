@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package downloadservice;
+
+option go_package = "./;download_service";
+
+import "google/protobuf/timestamp.proto";
+
+// DownloadService provides methods for downloading objects.
+service DownloadService {
+    // Download retrieves an object by its key.
+    rpc Download (DownloadRequest) returns (DownloadResponse);
+}
+
+// DownloadRequest is the request message for downloading an object.
+message DownloadRequest {
+    string key = 1; // The unique key of the object to be downloaded.
+}
+
+// DownloadResponse is the response message containing the downloaded object and metadata.
+message DownloadResponse {
+    string key = 1; // The unique key of the downloaded object.
+    google.protobuf.Timestamp expiration_date = 2; // The expiration date of the object, if applicable.
+    google.protobuf.Timestamp created_date = 3; // The creation date of the object.
+    bytes content = 4; // The binary content of the downloaded object.
+}
+
+message Metadata {
+    string key = 1;
+    google.protobuf.Timestamp created_at = 2;
+    google.protobuf.Timestamp expired_date = 3;
+}

@@ -56,7 +56,7 @@ func main() {
 
 	// Initialize models with the database connection
 	metadataRepo := repository.NewMetadataRepo(db)
-	newDwonloadServie, err := services.NewDownloadService(storageRepo, metadataRepo, log, cfg, ctx)
+	newDwonloadServie, err := services.NewDownloadService(storageRepo, metadataRepo, log, ctx, cfg.RedisMetadataAddr, cfg.RedisContentAddr, cfg.Kafka)
 	if err != nil {
 		log.PrintFatal(ctx, err, nil)
 		return

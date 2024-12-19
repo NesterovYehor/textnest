@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package keygenerator;
+
+option go_package = "./;key_generation";
+
+// Define the service with only the required methods
+service KeyGenerator {
+    rpc GetKey (GetKeyRequest) returns (GetKeyResponse);
+    rpc ReallocateKey (ReallocateKeyRequest) returns (ReallocateKeyResponse);
+}
+
+message GetKeyRequest {}
+message GetKeyResponse {
+    string key = 1;
+    string error = 2;
+}
+
+message ReallocateKeyRequest {
+    string key = 1;
+}
+
+message ReallocateKeyResponse {
+    string message = 1;
+    string error = 2;
+}
+

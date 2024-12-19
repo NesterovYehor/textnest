@@ -1,22 +1,27 @@
 syntax = "proto3";
 
-package uploadservice;
+package pasteupload;
 
-option go_package = "./;upload_service";
+option go_package = "./paste_upload;paste_upload";
 
 import "google/protobuf/timestamp.proto"; // Import the timestamp type
 
-service UploadService {
+// Upload RPC definition
+service PasteUpload {
     rpc Upload (UploadRequest) returns (UploadResponse);
 }
 
+// Upload request message
 message UploadRequest {
-    string key = 1;                             // Paste key
-    google.protobuf.Timestamp expiration_date = 2;  // Expiration date
-    bytes data = 3;                             // Paste data
+    string key = 1;                                // Unique paste key
+    google.protobuf.Timestamp expiration_date = 2; // Expiration date
+    bytes data = 3;                                // Paste content as bytes
 }
 
+// Upload response message
 message UploadResponse {
-    string message = 1;                        // Response message
+    string message = 1;                            // Response message (e.g., "Upload successful")
+    int32 status_code = 2;                         // HTTP-like status code (e.g., 200 for success)
+    google.protobuf.Timestamp expiration_date = 3; // Echo back the expiration date for confirmation
 }
 

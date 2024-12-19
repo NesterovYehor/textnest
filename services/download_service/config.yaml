@@ -1,5 +1,5 @@
 grpc:
-  port: ":4444"
+  port: "4444"
 kafka:
   brokers:
     - "localhost:9092"
@@ -11,4 +11,4 @@ db_url: "postgres://textnest:password@localhost/metadata-dev-db?sslmode=disable"
 metadata_cache_addr: ":6379"
 content_cache_addr: ":6380"
 maxRetries: 5
-expirationInterval: "5m"
+expiration_interval: "5m"

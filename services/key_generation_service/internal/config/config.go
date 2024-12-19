@@ -9,16 +9,15 @@ import (
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Grpc        *grpc.GrpcConfig   `yaml:"grpc"`
-	Kafka       kafka.KafkaConfig `yaml:"kafka"`
-	RedisOption *redis.Options     `yaml:"redis"`
+	Grpc      *grpc.GrpcConfig  `yaml:"grpc"`
+	Kafka     kafka.KafkaConfig `yaml:"kafka"`
+	RedisAddr string            `yaml:"redis"`
 
-    ExpirationInterval time.Duration `yaml:"expirationInterval"`
+	ExpirationInterval time.Duration `yaml:"expirationInterval"`
 }
 
 func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
@@ -50,7 +49,7 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 		log.PrintInfo(ctx, fmt.Sprintf("%+v\n", cfg.Kafka), nil)
 		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
 	}
-	if cfg.RedisOption == nil || cfg.RedisOption.Addr == "" {
+	if cfg.RedisAddr == "" {
 		log.PrintFatal(ctx, fmt.Errorf("redis configuration is incomplete"), nil)
 	}
 

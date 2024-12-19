@@ -34,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 
 	// Validate configuration values
 	assert.Equal(t, ":5555", cfg.Grpc.Port)
-	assert.Equal(t, "localhost:6378", cfg.RedisOption.Addr)
+	assert.Equal(t, "localhost:6378", cfg.RedisAddr)
 	assert.Equal(t, "localhost:9092", cfg.Kafka.Brokers[0])
 	assert.Equal(t, 0, cfg.Kafka.MaxRetries)
 	assert.Contains(t, cfg.Kafka.Topics, "delete-expired-key-topic")

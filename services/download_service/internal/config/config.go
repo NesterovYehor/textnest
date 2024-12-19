@@ -21,7 +21,7 @@ type Config struct {
 	RedisMetadataAddr string            `yaml:"metadata_cache_addr"`
 	RedisContentAddr  string            `yaml:"content_cache_addr"`
 
-	ExpirationInterval time.Duration `yaml:"expirationInterval"`
+	ExpirationInterval time.Duration `yaml:"expiration_interval"`
 }
 
 // LoadConfig loads configuration values from environment variables and the .env file.

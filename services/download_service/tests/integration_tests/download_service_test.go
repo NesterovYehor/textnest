@@ -32,7 +32,12 @@ func DownloaServieTest(t *testing.T) {
 	defer redisContainer.Terminate(ctx)
 
 	// Start Kafka container
-	kafkaContainer, err := container.StartKafka(ctx)
+	kafkaContainer, brokerAddr, err := container.StartKafka(ctx, &container.KafkaContainerOpts{
+		ClusterID:         "",
+		BrokerPort:        0,
+		Topics:            map[string]int32{},
+		ReplicationFactor: 0,
+	})
 	if err != nil {
 		t.Fatalf("Failed to start Kafka container: %v", err)
 	}
