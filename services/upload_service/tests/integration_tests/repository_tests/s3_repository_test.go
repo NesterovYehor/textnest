@@ -19,53 +19,24 @@ func init() {
 	// Load environment variables from the env.test file
 	err := godotenv.Load("../../../.env.test") // Adjust the path as needed
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env.test file")
 	}
 }
 
 func TestS3Repository_Integration(t *testing.T) {
 	// Setup AWS session and S3 client
 	region := "us-east-1"
-	bucketName := "test-textnest-bucket"
+	bucketName := "textnestbucket"
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
+		Region: aws.String(region),
 	})
 
 	assert.NoError(t, err)
 
 	s3Client := s3.New(sess)
 
-	// Create the S3 bucket
-	_, err = s3Client.CreateBucket(&s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
-	})
-	assert.NoError(t, err)
-	defer func() {
-		// Delete all objects in the bucket before deleting the bucket itself
-        resp, err := s3Client.ListObjects(&s3.ListObjectsInput{
-			Bucket: aws.String(bucketName),
-		})
-		if err != nil {
-			log.Println("Error listing objects:", err)
-		} else {
-			for _, obj := range resp.Contents {
-				_, err := s3Client.DeleteObject(&s3.DeleteObjectInput{
-					Bucket: aws.String(bucketName),
-					Key:    aws.String(*obj.Key),
-				})
-				if err != nil {
-					log.Println("Error deleting object:", err)
-				}
-			}
-		}
-
-		// Now delete the bucket
-		_, err = s3Client.DeleteBucket(&s3.DeleteBucketInput{
-			Bucket: aws.String(bucketName),
-		})
-	}()
 	// Initialize repository
-	repo, err := repository.NewS3Repository(region)
+	repo, err := repository.NewS3Repository()
 
 	// Test data
 	key := "test_key"

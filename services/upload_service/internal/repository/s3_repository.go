@@ -1,14 +1,13 @@
 package repository
 
 import (
+	"bytes"
 	"context"
-	"strings"
+	"log"
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/aws/aws-sdk-go-v2/config"
-    "github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/sony/gobreaker"
 )
@@ -18,18 +17,23 @@ type s3Repository struct {
 	breaker *middleware.CircuitBreakerMiddleware
 }
 
-func NewS3Repository(region string) (StorageRepository, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
-	if err != nil {
-		return nil, err
-	}
-	s3Client := s3.NewFromConfig(cfg)
+func NewS3Repository() (StorageRepository, error) {
 	cbSettings := gobreaker.Settings{
 		Name:        "ContentRepo",
-		MaxRequests: 5,                // Max requests allowed in half-open state
+		MaxRequests: 1,                // Max requests allowed in half-open state
 		Interval:    30 * time.Second, // Time window for tracking errors
-		Timeout:     60 * time.Second, // Time to reset the circuit after tripping
+		Timeout:     60 * time.Minute, // Time to reset the circuit after tripping
 	}
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to load AWS config: %v", err)
+	}
+
+	log.Printf("Loaded AWS config: %v", cfg.BaseEndpoint)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true // Ensure virtual-hosted style is used
+	})
 
 	return &s3Repository{
 		S3:      s3Client,
@@ -38,18 +42,15 @@ func NewS3Repository(region string) (StorageRepository, error) {
 }
 
 func (repo *s3Repository) UploadPasteContent(ctx context.Context, bucket, key string, data []byte) error {
-	operation := func(ctx context.Context) (any, error) {
-		uploader := manager.NewUploader(repo.S3)
-
-		_, err := uploader.Upload(ctx, &s3.PutObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-			Body:   strings.NewReader(string(data)),
-		})
-		return nil, err
-	}
-	if _, err := repo.breaker.Execute(ctx, operation); err != nil {
+	_, err := repo.S3.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+		Body:   bytes.NewReader(data),
+	})
+	if err != nil {
+		log.Fatalf("Failed to upload object: %v", err)
 		return err
 	}
+	log.Println("Successfully uploaded object:", key)
 	return nil
 }

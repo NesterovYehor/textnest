@@ -15,10 +15,10 @@ import (
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/config"
-	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/redis"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/services"
+	key_manager "github.com/NesterovYehor/TextNest/services/key_generation_service/proto"
 )
 
 func main() {
@@ -54,7 +54,7 @@ func main() {
 	// Start gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 	keyManagerService := services.NewKeyManagerServer(repo)
-	key_manager.RegisterKeyManagerServiceServer(grpcSrv.Grpc, keyManagerService)
+	key_manager.RegisterKeyGeneratorServer(grpcSrv.Grpc, keyManagerService)
 
 	// Start Kafka consumer
 	var wg sync.WaitGroup

@@ -3,13 +3,13 @@ package services
 import (
 	"context"
 
-	pb "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/repository"
+	pb "github.com/NesterovYehor/TextNest/services/key_generation_service/proto"
 )
 
 // KeyManagerServer now includes a redis.Client
 type KeyManagerService struct {
-	pb.UnimplementedKeyManagerServiceServer
+	pb.UnimplementedKeyGeneratorServer
 	repo *repository.KeyGeneratorRepository
 }
 

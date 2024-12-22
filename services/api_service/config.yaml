@@ -1,0 +1,6 @@
+upload_service:
+  port: "localhost:50052"
+key_service:
+  port: "localhost:50053"
+
+addr: ":6578"

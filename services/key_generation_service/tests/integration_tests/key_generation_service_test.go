@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	pb "github.com/NesterovYehor/TextNest/services/key_generation_service/internal/grpc_server"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/key_generation_service/internal/services"
+	pb "github.com/NesterovYehor/TextNest/services/key_generation_service/proto"
 	testutils "github.com/NesterovYehor/TextNest/services/key_generation_service/tests/test_utils"
 	"github.com/stretchr/testify/assert"
 )

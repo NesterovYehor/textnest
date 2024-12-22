@@ -15,7 +15,7 @@ import (
 type Config struct {
 	Grpc              *grpc.GrpcConfig  `yaml:"grpc"`
 	Kafka             kafka.KafkaConfig `yaml:"kafka"`
-    BucketName        string            `yaml:"bucket_name"`
+	BucketName        string            `yaml:"bucket_name"`
 	S3Region          string            `yaml:"region"`
 	DBURL             string            `yaml:"db_url"`
 	RedisMetadataAddr string            `yaml:"metadata_cache_addr"`

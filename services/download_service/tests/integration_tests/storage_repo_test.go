@@ -70,7 +70,7 @@ func TestStorageRepository(t *testing.T) {
 		assert.NoError(t, err) // Add error handling for `DeleteBucket`
 	}()
 
-	repo, err := repository.NewStorageRepository(bucketName, region)
+	repo, err := repository.NewStorageRepository(bucketName)
 	assert.NoError(t, err)
 	assert.NotNil(t, repo)
 
@@ -114,7 +114,7 @@ func TestStorageRepository_NoFound(t *testing.T) {
 		assert.NoError(t, err) // Add error handling for `DeleteBucket`
 	}()
 
-	repo, err := repository.NewStorageRepository(bucketName, region)
+	repo, err := repository.NewStorageRepository(bucketName)
 	assert.NoError(t, err)
 	assert.NotNil(t, repo)
 

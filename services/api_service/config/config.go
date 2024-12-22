@@ -14,6 +14,7 @@ import (
 type Config struct {
 	UploadService *grpc.GrpcConfig `yaml:"upload_service"`
 	KeyService    *grpc.GrpcConfig `yaml:"key_service"`
+	HttpAddr      string           `yaml:"addr"`
 }
 
 // LoadConfig loads the gRPC service configuration from a YAML file.

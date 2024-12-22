@@ -18,9 +18,9 @@ type s3Repository struct {
 	beaker *middleware.CircuitBreakerMiddleware
 }
 
-func NewStorageRepository(bucket, region string) (StorageRepository, error) {
+func NewStorageRepository(bucket string) (StorageRepository, error) {
 	// Load AWS configuration with specified region
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}

@@ -9,8 +9,10 @@ import (
 )
 
 // ValidateMetaData performs validation checks on metadata
-func ValidateMetaData(metadata *models.MetaData, v *validator.Validator) {
+func ValidateMetaData(metadata *models.MetaData) *validator.Validator {
+	v := validator.New()
 	v.Check(len([]rune(metadata.Key)) == 8, "key", "Key should be 8 characters long")
 	v.Check(!metadata.CreatedAt.After(time.Now()), "created_at", "Paste creation date cannot be in the future")
 	v.Check(metadata.ExpirationDate.After(time.Now()), "expiration_date", "Expiration date must be in the future")
+	return v
 }

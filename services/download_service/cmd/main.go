@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,11 +11,9 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
-	pb "github.com/NesterovYehor/TextNest/services/download_service/internal/grpc_server"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/services"
-	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/coordinators"
 )
 
 func main() {
@@ -39,31 +36,12 @@ func main() {
 	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 
-	// Initialize S3 storage
-	storageRepo, err := repository.NewStorageRepository(cfg.BucketName, cfg.S3Region)
+	coord, err := coordinators.NewDownloadCoordinator(ctx, cfg, log)
 	if err != nil {
 		log.PrintError(ctx, err, nil)
-		return
 	}
-
-	// Initialize the database connection using openDB function
-	db, err := openDB(cfg.DBURL) // Make sure cfg.Database.DSN contains your correct DSN
-	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("Failed to connect to the database %v:", err), nil)
-		return
-	}
-	defer db.Close()
-
-	// Initialize models with the database connection
-	metadataRepo := repository.NewMetadataRepo(db)
-	newDwonloadServie, err := services.NewDownloadService(storageRepo, metadataRepo, log, ctx, cfg.RedisMetadataAddr, cfg.RedisContentAddr, cfg.Kafka)
-	if err != nil {
-		log.PrintFatal(ctx, err, nil)
-		return
-	}
-
 	// Register the UploadService with the gRPC server
-	pb.RegisterDownloadServiceServer(grpcSrv.Grpc, newDwonloadServie)
+	pb.RegisterPasteDownloadServer(grpcSrv.Grpc, coord)
 
 	// Run the gRPC server
 	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
@@ -82,19 +60,4 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 	}
 	multiWriter := io.MultiWriter(logFile, os.Stdout)
 	return jsonlog.New(multiWriter, slog.LevelInfo), nil
-}
-
-func openDB(dsn string) (*sql.DB, error) {
-	// Open the database connection
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify the connection
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }

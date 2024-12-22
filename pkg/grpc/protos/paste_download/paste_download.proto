@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package downloadservice;
+package pastedownload;
 
-option go_package = "./;download_service";
+option go_package = "./;paste_download";
 
 import "google/protobuf/timestamp.proto";
 
 // DownloadService provides methods for downloading objects.
-service DownloadService {
+service PasteDownload{
     // Download retrieves an object by its key.
     rpc Download (DownloadRequest) returns (DownloadResponse);
 }

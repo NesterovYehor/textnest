@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	http_server "github.com/NesterovYehor/TextNest/pkg/http"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/api_service/config"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
@@ -18,8 +17,9 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	logger, err := setupLogger("app.log")
 	if err != nil {
 		log.Panic(err)
@@ -28,20 +28,50 @@ func main() {
 
 	cfg, err := config.LoadConfig(ctx, logger)
 	if err != nil {
-		logger.PrintFatal(ctx, err, nil)
+		logger.PrintFatal(ctx, fmt.Errorf("failed to load config: %w", err), nil)
 		return
 	}
 
 	appContext, err := app.GetAppContext(cfg, ctx, logger)
 	if err != nil {
-		log.Panic(err)
+		logger.PrintFatal(ctx, fmt.Errorf("failed to initialize app context: %w", err), nil)
 		return
 	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/upload", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Request received")
-		handler.UploadPaste(w, r, cfg, ctx, appContext) // Pass the pointer to cfg
+	mux.HandleFunc("/v1/upload", uploadPasteHandler(cfg, appContext, logger))
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
 	})
+
+	server := &http.Server{
+		Addr:    cfg.HttpAddr,
+		Handler: mux,
+	}
+
+	go func() {
+		logger.PrintInfo(ctx, fmt.Sprintf("Starting server on %v", cfg.HttpAddr), nil)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.PrintError(ctx, fmt.Errorf("HTTP server error: %w", err), nil)
+		}
+	}()
+
+	<-ctx.Done()
+	logger.PrintInfo(ctx, "Shutting down server", nil)
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.PrintError(ctx, fmt.Errorf("error during shutdown: %w", err), nil)
+	}
+}
+
+func uploadPasteHandler(cfg *config.Config, appContext *app.AppContext, logger *jsonlog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.PrintInfo(r.Context(), "Request received", nil)
+		handler.UploadPaste(w, r, cfg, r.Context(), appContext)
+	}
 }
 
 // setupLogger initializes the application logger
@@ -49,10 +79,9 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
-		logFile.Close()
 		return nil, err
 	}
-	multiWriter := io.MultiWriter(logFile, os.Stdout)
 
+	multiWriter := io.MultiWriter(logFile, os.Stdout)
 	return jsonlog.New(multiWriter, slog.LevelInfo), nil
 }

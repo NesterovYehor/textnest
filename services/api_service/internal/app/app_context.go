@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
@@ -11,7 +10,6 @@ import (
 )
 
 type AppContext struct {
-	DB           *sql.DB
 	KeyGenClient *grpc_clients.KeyGeneratorClient
 	UploadClient *grpc_clients.UploadClient
 	Logger       *jsonlog.Logger
@@ -49,13 +47,3 @@ func GetAppContext(cfg *config.Config, ctx context.Context, logger *jsonlog.Logg
 
 	return instance, err
 }
-
-// Close releases resources held by the AppContext
-func (a *AppContext) Close() {
-	if a.DB != nil {
-		_ = a.DB.Close()
-	}
-
-	// Note: gRPC connections can also be closed if explicitly stored.
-}
-
