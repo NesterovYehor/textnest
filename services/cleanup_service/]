@@ -20,7 +20,7 @@ func GetTestData() []map[string]interface{} {
 
 func GetTestEnv() error {
 	// Load environment variables from the `.env` file
-	err := godotenv.Load(".env")
+	err := godotenv.Load("./.env")
 	if err != nil {
 		return fmt.Errorf("failed to load .env file: %w", err)
 	}
@@ -33,7 +33,7 @@ var S3TestData = struct {
 	Key     string
 	Content string
 }{
-	Bucket:  "test-textnest-bucket",
+	Bucket:  "test-bucket",
 	Region:  "us-east-1",
 	Key:     "test_key", // Same key as in metadata
 	Content: "Test data for expired paste content",

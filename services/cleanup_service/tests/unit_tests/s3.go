@@ -12,14 +12,11 @@ import (
 
 // Returns an error if setup fails, along with a cleanup function to clean up resources.
 func SetUpTestS3(ctx context.Context) (func(), error) {
-	// Load environment variables from the env.test file
-	err := GetTestEnv()
-
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(S3TestData.Region))
 	if err != nil {
-		return nil, err
+		log.Fatalf("Failed to load AWS config: %v", err)
+		return func() {}, err
 	}
-
 	s3Client := s3.NewFromConfig(cfg)
 
 	// Create the bucket
@@ -27,6 +24,7 @@ func SetUpTestS3(ctx context.Context) (func(), error) {
 		Bucket: aws.String(S3TestData.Bucket),
 	})
 	if err != nil {
+		log.Println("PENIS")
 		return nil, err
 	}
 
@@ -37,6 +35,7 @@ func SetUpTestS3(ctx context.Context) (func(), error) {
 		Body:   strings.NewReader(S3TestData.Content),
 	})
 	if err != nil {
+		log.Println("PENIS_2")
 		return nil, err
 	}
 

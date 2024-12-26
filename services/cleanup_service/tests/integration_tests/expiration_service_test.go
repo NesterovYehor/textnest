@@ -16,10 +16,6 @@ func TestProcessExpirations(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Load test environment variables
-	err := testutils.GetTestEnv()
-	assert.NoError(t, err)
-
 	// Set up test database
 	db, cleanUpDB := testutils.SetupTestDatabase(t, ctx)
 	defer cleanUpDB()
