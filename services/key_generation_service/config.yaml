@@ -1,5 +1,5 @@
 grpc:
-  port: "50053"
+  port: "50054"
 
 redis: "redis:6379"
 

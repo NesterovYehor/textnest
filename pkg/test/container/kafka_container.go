@@ -7,13 +7,11 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/docker/go-connections/nat"
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/kafka"
 )
 
 type KafkaContainerOpts struct {
 	ClusterID         string           // Kafka Cluster ID (default: "test-cluster")
-	BrokerPort        int              // Port for Kafka broker
 	Topics            map[string]int32 // Topics to create with their partitions
 	ReplicationFactor int16            // Replication factor for topics
 }
@@ -23,9 +21,6 @@ func StartKafka(ctx context.Context, opts *KafkaContainerOpts) (*kafka.KafkaCont
 	if opts.ClusterID == "" {
 		opts.ClusterID = "test-cluster"
 	}
-	if opts.BrokerPort == 0 {
-		opts.BrokerPort = 9092
-	}
 	if opts.ReplicationFactor == 0 {
 		opts.ReplicationFactor = 1
 	}
@@ -34,19 +29,20 @@ func StartKafka(ctx context.Context, opts *KafkaContainerOpts) (*kafka.KafkaCont
 	kafkaContainer, err := kafka.Run(ctx,
 		"confluentinc/cp-kafka:latest",
 		kafka.WithClusterID(opts.ClusterID),
-		testcontainers.WithHostPortAccess(opts.BrokerPort),
 	)
 	if err != nil {
 		return nil, "", err
 	}
 
-	// Retrieve container's host and port
+	// Retrieve container's host and dynamically mapped port
 	host, err := kafkaContainer.Host(ctx)
 	if err != nil {
 		kafkaContainer.Terminate(ctx)
 		return nil, "", err
 	}
-	mappedPort, err := kafkaContainer.MappedPort(ctx, nat.Port(opts.BrokerPort))
+
+	// Kafka's default exposed port is 9092, retrieve the mapped port
+	mappedPort, err := kafkaContainer.MappedPort(ctx, nat.Port("9092/tcp"))
 	if err != nil {
 		kafkaContainer.Terminate(ctx)
 		return nil, "", err

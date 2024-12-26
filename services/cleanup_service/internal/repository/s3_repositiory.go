@@ -13,13 +13,12 @@ import (
 )
 
 type s3Repository struct {
-	S3                *s3.Client
-	s3PresignedClient *s3.PresignClient
+	S3 *s3.Client
 }
 
-func NewS3Storage(bucket, region string) (StorageRepository, error) {
+func newS3Storage() (StorageRepository, error) {
 	// Load AWS configuration with specified region
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
@@ -28,11 +27,11 @@ func NewS3Storage(bucket, region string) (StorageRepository, error) {
 	s3Client := s3.NewFromConfig(cfg)
 
 	return &s3Repository{
-		S3:     s3Client,
+		S3: s3Client,
 	}, nil
 }
 
-func (storage *s3Repository) DeletePasteByKey(key string, bucket string) error {
+func (storage *s3Repository) DeletePasteContentByKey(key string, bucket string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 

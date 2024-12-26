@@ -52,7 +52,7 @@ func (coord *DownloadCoordinator) Download(ctx context.Context, req *pb.Download
 	}
 
 	// Fetch content
-	content, err := coord.fetchContentService.GetContent(ctx, metadata.Key)
+	content, err := coord.fetchContentService.GetContent(ctx, req.Key)
 	if err != nil {
 		return nil, err
 	}

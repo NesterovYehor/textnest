@@ -9,6 +9,7 @@ import (
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/cache"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
+	_ "github.com/lib/pq"
 )
 
 type ServiceFactory struct {

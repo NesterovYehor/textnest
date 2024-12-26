@@ -3,7 +3,7 @@ package repository
 import "github.com/NesterovYehor/TextNest/pkg/validator"
 
 type StorageRepository interface {
-	DeletePasteByKey(key string, bucket string) error
+	DeletePasteContentByKey(key string, bucket string) error
 	DeleteExpiredPastes(keys []string, bucket string) error
 }
 

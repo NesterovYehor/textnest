@@ -40,6 +40,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/upload", uploadPasteHandler(cfg, appContext, logger))
+	mux.HandleFunc("/v1/download", downloadPasteHandler(cfg, appContext, logger))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -64,6 +65,13 @@ func main() {
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.PrintError(ctx, fmt.Errorf("error during shutdown: %w", err), nil)
+	}
+}
+
+func downloadPasteHandler(cfg *config.Config, appContext *app.AppContext, logger *jsonlog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.PrintInfo(r.Context(), "Request received", nil)
+		handler.DownloadPaste(w, r, cfg, r.Context(), appContext)
 	}
 }
 

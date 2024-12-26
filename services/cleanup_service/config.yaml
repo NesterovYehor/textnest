@@ -1,0 +1,10 @@
+db_url: "postgresql://textnest:password@postgres:5432/textnest_db?sslmode=disable"
+bucket_name: "textnestbucket"
+expiration_interval: "1m"
+kafka:
+  brokers:
+    - "kafka:9092"
+  topics:
+    - "delete-expired-paste-topic"
+  groupID: "no-group"
+  maxRetries: 5

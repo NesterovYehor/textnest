@@ -2,75 +2,49 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/config"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
+	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/services"
 )
 
-type ExpirationChecker struct {
-	metadataRepo  repository.MetadataRepository
-	storageRepo   repository.StorageRepository
-	kafkaProducer *kafka.KafkaProducer
+type Scheduler struct {
+	service *services.ExpirationService
+	log     *jsonlog.Logger
 }
 
-func NewExpirationChecker(metadataRepo repository.MetadataRepository, storageRepo repository.StorageRepository, kafkaProducer *kafka.KafkaProducer) *ExpirationChecker {
-	return &ExpirationChecker{
-		metadataRepo:  metadataRepo,
-		storageRepo:   storageRepo,
-		kafkaProducer: kafkaProducer,
+func NewScheduler(service *services.ExpirationService, log *jsonlog.Logger) *Scheduler {
+
+	return &Scheduler{
+		service: service,
+		log:     log,
 	}
 }
 
-func (checker *ExpirationChecker) CheckForExpiredPastes(ctx context.Context, cfg *config.Config, log *jsonlog.Logger) {
-	expiredKeys, err := checker.metadataRepo.DeleteAndReturnExpiredKeys()
-	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("Error retrieving expired pastes: %v", err), nil)
-		return
+func (s *Scheduler) Start(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	stopSignal := make(chan os.Signal, 1)
+	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
+
+	s.log.PrintInfo(ctx, "Scheduler started", nil)
+
+	for {
+		select {
+		case <-ticker.C:
+			s.log.PrintInfo(ctx, "Triggering expiration service", nil)
+			if err := s.service.ProcessExpirations(ctx); err != nil {
+				s.log.PrintError(ctx, err, nil)
+			}
+			s.log.PrintInfo(ctx, "Expiration service run completed", nil)
+
+		case <-stopSignal:
+			s.log.PrintInfo(ctx, "Received shutdown signal, stopping scheduler", nil)
+			return
+		}
 	}
-
-	if len(expiredKeys) == 0 {
-		log.PrintInfo(ctx, "No expired pastes found.", nil)
-		return
-	}
-
-	// Delete expired pastes from storage
-	if err := checker.storageRepo.DeleteExpiredPastes(expiredKeys, cfg.BucketName); err != nil {
-		log.PrintError(ctx, fmt.Errorf("Error deleting expired pastes from storage: %v", err), nil)
-		return
-	}
-
-	// Format expired keys as JSON
-	jsonExpiredKeys, err := formatExpiredKeysMessage(expiredKeys)
-	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("Failed to encode keys to JSON: %v", err), nil)
-		return
-	}
-
-	// Produce Kafka message for relocating expired keys
-	if err := checker.kafkaProducer.ProduceMessages(jsonExpiredKeys, "relocate-key-topic"); err != nil {
-		log.PrintError(ctx, fmt.Errorf("Failed to produce message to Kafka (Topic: %v): %v", "relocate-key-topic", err), nil)
-		return
-	}
-
-	log.PrintInfo(ctx, fmt.Sprintf("Successfully deleted expired pastes and sent to Kafka: %v", expiredKeys), nil)
-}
-
-// Helper function to format expired keys as a JSON message
-func formatExpiredKeysMessage(keys []string) (string, error) {
-	message := struct {
-		ExpiredKeys []string `json:"expired_keys"`
-	}{
-		ExpiredKeys: keys,
-	}
-
-	msgBytes, err := json.Marshal(message)
-	if err != nil {
-		return "", err
-	}
-
-	return string(msgBytes), nil
 }

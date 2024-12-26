@@ -12,14 +12,14 @@ type metadataRepository struct {
 	DB *sql.DB // Database connection
 }
 
-func NewMetadataRepository(db *sql.DB) MetadataRepository {
+func newDBRepository(db *sql.DB) MetadataRepository {
 	return &metadataRepository{
 		DB: db,
 	}
 }
 
 func (repo *metadataRepository) DeleteAndReturnExpiredKeys() ([]string, error) {
-	query := `DELETE FROM metadata WHERE expiration_time <= $1 RETURNING key; `
+	query := `DELETE FROM metadata WHERE expiration_date <= $1 RETURNING key; `
 	var keys []string
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)

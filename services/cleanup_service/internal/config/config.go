@@ -14,7 +14,6 @@ import (
 type Config struct {
 	ExpirationInterval time.Duration      `yaml:"expiration_interval"`
 	BucketName         string             `yaml:"bucket_name"`
-	S3Region           string             `yaml:"region"`
 	Kafka              *kafka.KafkaConfig `yaml:"kafka"`
 	DBUrl              string             `yaml:"db_url"`
 }
@@ -47,12 +46,10 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 	if cfg.ExpirationInterval < time.Second || cfg.ExpirationInterval > time.Hour {
 		log.PrintFatal(ctx, fmt.Errorf("Timeout duration should be between 1 second and 1 hour, got: %v", cfg.ExpirationInterval), nil)
 	}
-	if cfg.Kafka != nil || len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
+	if cfg.Kafka == nil || len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
 		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
 	}
-	if cfg.BucketName == "" || cfg.S3Region == "" {
-		log.PrintInfo(ctx, cfg.BucketName, nil)
-		log.PrintInfo(ctx, cfg.S3Region, nil)
+	if cfg.BucketName == "" {
 		log.PrintFatal(ctx, fmt.Errorf("S3 configuration is incomplete"), nil)
 	}
 

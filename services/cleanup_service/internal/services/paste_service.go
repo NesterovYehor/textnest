@@ -28,7 +28,7 @@ func (service *PasteService) DeletePasteByKey(ctx context.Context, key string, b
 		return fmt.Errorf("failed to delete metadata: %w", err)
 	}
 
-	if err := service.storageRepo.DeletePasteByKey(key, bucketName); err != nil {
+	if err := service.storageRepo.DeletePasteContentByKey(key, bucketName); err != nil {
 		return fmt.Errorf("failed to delete paste from storage: %w", err)
 	}
 

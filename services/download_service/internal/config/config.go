@@ -17,7 +17,7 @@ type Config struct {
 	Kafka             kafka.KafkaConfig `yaml:"kafka"`
 	BucketName        string            `yaml:"bucket_name"`
 	S3Region          string            `yaml:"region"`
-	DBURL             string            `yaml:"db_url"`
+	DBURL             string            `yaml:"db"`
 	RedisMetadataAddr string            `yaml:"metadata_cache_addr"`
 	RedisContentAddr  string            `yaml:"content_cache_addr"`
 

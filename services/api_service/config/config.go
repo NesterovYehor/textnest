@@ -12,9 +12,10 @@ import (
 
 // ServiceConfig holds gRPC connection details for all services.
 type Config struct {
-	UploadService *grpc.GrpcConfig `yaml:"upload_service"`
-	KeyService    *grpc.GrpcConfig `yaml:"key_service"`
-	HttpAddr      string           `yaml:"addr"`
+	UploadService   *grpc.GrpcConfig `yaml:"upload_service"`
+	DownloadService *grpc.GrpcConfig `yaml:"download_service"`
+	KeyService      *grpc.GrpcConfig `yaml:"key_service"`
+	HttpAddr        string           `yaml:"addr"`
 }
 
 // LoadConfig loads the gRPC service configuration from a YAML file.

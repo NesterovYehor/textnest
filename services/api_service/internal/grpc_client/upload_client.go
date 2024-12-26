@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	paste_upload "github.com/NesterovYehor/TextNest/services/api_service/proto/upload_service"
+	paste_upload "github.com/NesterovYehor/TextNest/services/api_service/api/upload_service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"

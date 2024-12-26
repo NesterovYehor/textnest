@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	key_generation "github.com/NesterovYehor/TextNest/services/api_service/proto/key_generation_service"
+	key_generation "github.com/NesterovYehor/TextNest/services/api_service/api/key_generation_service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

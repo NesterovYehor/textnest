@@ -2,67 +2,59 @@ package services
 
 import (
 	"context"
-	"database/sql"
+	"encoding/json"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
-	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
-	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/scheduler"
 )
 
 type ExpirationService struct {
-	db *sql.DB
+	metadataRepo  repository.MetadataRepository
+	storageRepo   repository.StorageRepository
+	kafkaProducer *kafka.KafkaProducer
+	bucketName    string
 }
 
-func NewExpirationService(db *sql.DB) *ExpirationService {
+func NewExpirationService(
+	metadataRepo repository.MetadataRepository,
+	storageRepo repository.StorageRepository,
+	kafkaProducer *kafka.KafkaProducer,
+	bucketName string,
+) *ExpirationService {
 	return &ExpirationService{
-		db: db,
+		metadataRepo:  metadataRepo,
+		storageRepo:   storageRepo,
+		kafkaProducer: kafkaProducer,
+		bucketName:    bucketName,
 	}
 }
 
-func (service *ExpirationService) Start(cfg *config.Config, ctx context.Context, log *jsonlog.Logger) {
-	// Initialize dependencies
-	repo := repository.NewMetadataRepository(service.db)
-	storage, err := repository.NewS3Storage(cfg.BucketName, cfg.S3Region)
+func (s *ExpirationService) ProcessExpirations(ctx context.Context) error {
+	// Step 1: Retrieve expired keys
+	expiredKeys, err := s.metadataRepo.DeleteAndReturnExpiredKeys()
 	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("failed to create S3 storage: %w", err), nil)
-		return
+		return fmt.Errorf("error retrieving expired pastes: %v", err)
 	}
-	kafkaProducer, err := kafka.NewProducer(*cfg.Kafka, ctx)
+
+	if len(expiredKeys) == 0 {
+		return nil // No expired keys to process
+	}
+
+	// Step 2: Delete expired keys from storage
+	if err := s.storageRepo.DeleteExpiredPastes(expiredKeys, s.bucketName); err != nil {
+		return fmt.Errorf("error deleting expired pastes from storage: %v", err)
+	}
+
+	// Step 3: Send expired keys to Kafka
+	jsonExpiredKeys, err := json.Marshal(map[string][]string{"expired_keys": expiredKeys})
 	if err != nil {
-		log.PrintError(ctx, fmt.Errorf("failed to create Kafka producer: %w", err), nil)
-		return
+		return fmt.Errorf("failed to encode keys to JSON: %v", err)
 	}
 
-	checker := scheduler.NewExpirationChecker(repo, storage, kafkaProducer)
-	ticker := time.NewTicker(cfg.ExpirationInterval)
-
-	// Handle graceful shutdown
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	defer kafkaProducer.Close()
-	defer ticker.Stop()
-	log.PrintInfo(ctx, "Expiration Service started", nil)
-
-	stopSignal := make(chan os.Signal, 1)
-	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-ticker.C:
-			log.PrintInfo(ctx, "Starting expiration check", nil)
-			checker.CheckForExpiredPastes(ctx, cfg, log)
-			log.PrintInfo(ctx, "Expiration check completed", nil)
-
-		case <-stopSignal:
-			log.PrintInfo(ctx, "Received shutdown signal, cleaning up resources", nil)
-			return
-		}
+	if err := s.kafkaProducer.ProduceMessages(string(jsonExpiredKeys), "relocate-key-topic"); err != nil {
+		return fmt.Errorf("failed to produce message to Kafka: %v", err)
 	}
+
+	return nil
 }

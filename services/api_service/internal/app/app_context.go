@@ -10,9 +10,10 @@ import (
 )
 
 type AppContext struct {
-	KeyGenClient *grpc_clients.KeyGeneratorClient
-	UploadClient *grpc_clients.UploadClient
-	Logger       *jsonlog.Logger
+	KeyGenClient   *grpc_clients.KeyGeneratorClient
+	UploadClient   *grpc_clients.UploadClient
+	DownloadClient *grpc_clients.DownloadClient
+	Logger         *jsonlog.Logger
 }
 
 var (
@@ -37,11 +38,17 @@ func GetAppContext(cfg *config.Config, ctx context.Context, logger *jsonlog.Logg
 			err = uploadErr
 			return
 		}
+		downloadPasteClient, downloadErr := grpc_clients.NewDownloadClient(cfg.DownloadService.Port)
+		if downloadErr != nil {
+			err = uploadErr
+			return
+		}
 		// Set the singleton instance
 		instance = &AppContext{
-			KeyGenClient: keyGenClient,
-			UploadClient: uploadPasteClient,
-			Logger:       logger,
+			KeyGenClient:   keyGenClient,
+			UploadClient:   uploadPasteClient,
+			DownloadClient: downloadPasteClient,
+			Logger:         logger,
 		}
 	})
 
