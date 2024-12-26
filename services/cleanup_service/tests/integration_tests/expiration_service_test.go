@@ -2,7 +2,6 @@ package integrationtests
 
 import (
 	"context"
-	"log"
 	"testing"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
@@ -16,39 +15,52 @@ import (
 func TestProcessExpirations(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Load test environment variables
 	err := testutils.GetTestEnv()
 	assert.NoError(t, err)
+
+	// Set up test database
 	db, cleanUpDB := testutils.SetupTestDatabase(t, ctx)
 	defer cleanUpDB()
-	cleanUpS3, err := testutils.SetUpTestS3(ctx)
-	defer cleanUpS3()
-	assert.NoError(t, err)
 
+	// Set up S3 bucket
+	cleanUpS3, err := testutils.SetUpTestS3(ctx)
+	assert.NoError(t, err)
+	defer cleanUpS3()
+
+	// Kafka options
+	topicName := "example-topic"
 	opts := &container.KafkaContainerOpts{
 		ClusterID:         "test-cluster",
-		BrokerPort:        1111,
-		Topics:            map[string]int32{"example-topic": 1},
+		Topics:            map[string]int32{topicName: 1},
 		ReplicationFactor: 1,
 	}
+
+	// Start Kafka container
 	kafkaContainer, brokerAddr, err := container.StartKafka(ctx, opts)
-	if err != nil {
-		log.Fatalf("Failed to start Kafka: %v", err)
-	}
-
-	kafkaCfg := kafka.LoadKafkaConfig([]string{brokerAddr}, []string{"example-tipic"}, "no-group", 1)
-
-	kafkaProd, err := kafka.NewProducer(*kafkaCfg, ctx)
+	assert.NoError(t, err)
 	defer kafkaContainer.Terminate(ctx)
 
+	// Configure Kafka producer
+	kafkaCfg := kafka.LoadKafkaConfig([]string{brokerAddr}, []string{topicName}, "no-group", 1)
+	kafkaProd, err := kafka.NewProducer(*kafkaCfg, ctx)
+	assert.NoError(t, err)
+
+	// Create repositories and services
 	factory := repository.NewRepositoryFactory(db)
 	metadataRepo := factory.CreateMetadataRepository()
 	storageRepo, err := factory.CreateStorageRepository()
+	assert.NoError(t, err)
+
+	// Expiration service
 	srv := services.NewExpirationService(
 		metadataRepo, storageRepo,
 		kafkaProd,
 		testutils.S3TestData.Bucket,
 	)
 
+	// Execute expiration processing
 	err = srv.ProcessExpirations(ctx)
 	assert.NoError(t, err)
 }

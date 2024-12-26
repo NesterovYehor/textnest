@@ -17,7 +17,6 @@ type KafkaContainerOpts struct {
 }
 
 func StartKafka(ctx context.Context, opts *KafkaContainerOpts) (*kafka.KafkaContainer, string, error) {
-	// Set default options if not provided
 	if opts.ClusterID == "" {
 		opts.ClusterID = "test-cluster"
 	}
@@ -25,7 +24,6 @@ func StartKafka(ctx context.Context, opts *KafkaContainerOpts) (*kafka.KafkaCont
 		opts.ReplicationFactor = 1
 	}
 
-	// Start the Kafka container
 	kafkaContainer, err := kafka.Run(ctx,
 		"confluentinc/cp-kafka:latest",
 		kafka.WithClusterID(opts.ClusterID),
@@ -34,24 +32,20 @@ func StartKafka(ctx context.Context, opts *KafkaContainerOpts) (*kafka.KafkaCont
 		return nil, "", err
 	}
 
-	// Retrieve container's host and dynamically mapped port
 	host, err := kafkaContainer.Host(ctx)
 	if err != nil {
 		kafkaContainer.Terminate(ctx)
 		return nil, "", err
 	}
 
-	// Kafka's default exposed port is 9092, retrieve the mapped port
 	mappedPort, err := kafkaContainer.MappedPort(ctx, nat.Port("9092/tcp"))
 	if err != nil {
 		kafkaContainer.Terminate(ctx)
 		return nil, "", err
 	}
 
-	// Construct the broker address (host:port)
 	brokerAddr := fmt.Sprintf("%s:%s", host, mappedPort.Port())
 
-	// If topics are specified, create them
 	if len(opts.Topics) > 0 {
 		err = createTopics(brokerAddr, opts.Topics, opts.ReplicationFactor)
 		if err != nil {
