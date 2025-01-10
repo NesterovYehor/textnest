@@ -4,19 +4,25 @@ import (
 	"context"
 
 	"github.com/IBM/sarama"
-	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/services"
 )
 
-func HandleDeleteExpiredPaste(ctx context.Context, message *sarama.ConsumerMessage, srv *services.PasteService, log *jsonlog.Logger, bucketName string) error {
-	key := string(message.Value)
+// ExpiredPasteHandler processes messages for expired pastes
+type ExpiredPasteHandler struct {
+	pasteService *services.PasteService
+}
 
-	if err := srv.DeletePasteByKey(ctx, key, bucketName); err != nil {
-		log.PrintError(ctx, err, nil)
+// NewExpiredPasteHandler initializes a handler for expired paste topic
+func NewExpiredPasteHandler(srv *services.PasteService) *ExpiredPasteHandler {
+	return &ExpiredPasteHandler{pasteService: srv}
+}
+
+// Handle processes the Kafka message to delete expired paste
+func (h *ExpiredPasteHandler) Handle(ctx context.Context, msg *sarama.ConsumerMessage) error {
+	key := string(msg.Value)
+	if err := h.pasteService.DeletePasteByKey(ctx, key); err != nil {
 		return err
 	}
-
-	log.PrintInfo(ctx, "Expired paste is deleted", nil)
-
 	return nil
 }
+

@@ -1,0 +1,60 @@
+{"time":"2024-12-27T00:47:35.083393+01:00","level":"INFO","msg":"Scheduler started"}
+{"time":"2024-12-27T00:47:45.111163+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:47:45.224677+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:47:55.08815+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:47:55.123339+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:05.102027+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:05.175849+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:15.089683+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:15.133532+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:25.092456+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:25.131539+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:35.092225+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:35.145873+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:45.087166+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:45.177065+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:48:55.097234+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:48:55.158307+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:05.185016+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:05.343508+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:15.09073+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:15.159458+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:25.085659+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:25.098675+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:35.084186+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:35.096158+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:45.083586+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:45.086814+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:49:55.082937+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:49:55.085361+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:05.136634+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:05.224006+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:15.084256+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:15.086708+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:25.084646+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:25.087927+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:35.08348+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:35.085464+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:45.084263+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:45.086043+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:50:55.083914+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:50:55.086163+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:05.093377+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:51:05.173102+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:15.088626+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:51:15.125255+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:25.091356+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:51:25.155784+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:35.093675+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:51:35.158007+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:45.103911+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:51:45.173572+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:51:46.146083+01:00","level":"INFO","msg":"Received shutdown signal, stopping scheduler"}
+{"time":"2024-12-27T00:53:44.967952+01:00","level":"INFO","msg":"Test completed successfully"}
+{"time":"2024-12-27T00:53:44.96818+01:00","level":"INFO","msg":"Scheduler started"}
+{"time":"2024-12-27T00:53:54.973612+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:53:54.998089+01:00","level":"INFO","msg":"Expiration service run completed"}
+{"time":"2024-12-27T00:55:29.259757+01:00","level":"INFO","msg":"Test completed successfully"}
+{"time":"2024-12-27T00:55:29.260075+01:00","level":"INFO","msg":"Scheduler started"}
+{"time":"2024-12-27T00:55:39.264467+01:00","level":"INFO","msg":"Triggering expiration service"}
+{"time":"2024-12-27T00:55:39.280441+01:00","level":"INFO","msg":"Expiration service run completed"}

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
-	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,7 +18,7 @@ type Config struct {
 }
 
 // LoadConfig initializes the configuration by loading variables from the .env file and environment.
-func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
+func LoadConfig(ctx context.Context) (*Config, error) {
 	// Read CONFIG_PATH from environment
 	path := os.Getenv("CONFIG_PATH")
 	if path == "" {
@@ -27,8 +26,7 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 	}
 	data, err := os.Open(path)
 	if err != nil {
-		log.PrintFatal(ctx, fmt.Errorf("failed to read configuration file: %w", err), nil)
-		return nil, err
+		return nil, fmt.Errorf("failed to read configuration file: %w", err)
 	}
 	defer data.Close()
 
@@ -36,21 +34,20 @@ func LoadConfig(ctx context.Context, log *jsonlog.Logger) (*Config, error) {
 	decoder := yaml.NewDecoder(data)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		log.PrintFatal(ctx, fmt.Errorf("failed to parse configuration file: %w", err), nil)
-		return nil, err
+		return nil, fmt.Errorf("failed to parse configuration file: %w", err)
 	}
 	// Validate required fields
 	if cfg.DBUrl == "" {
-		log.PrintFatal(ctx, fmt.Errorf("gRPC configuration is incomplete"), nil)
+		return nil, fmt.Errorf("gRPC configuration is incomplete")
 	}
 	if cfg.ExpirationInterval < time.Second || cfg.ExpirationInterval > time.Hour {
-		log.PrintFatal(ctx, fmt.Errorf("Timeout duration should be between 1 second and 1 hour, got: %v", cfg.ExpirationInterval), nil)
+		return nil, fmt.Errorf("Timeout duration should be between 1 second and 1 hour, got: %v", cfg.ExpirationInterval)
 	}
 	if cfg.Kafka == nil || len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
-		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
+		return nil, fmt.Errorf("kafka configuration is incomplete")
 	}
 	if cfg.BucketName == "" {
-		log.PrintFatal(ctx, fmt.Errorf("S3 configuration is incomplete"), nil)
+		return nil, fmt.Errorf("S3 configuration is incomplete")
 	}
 
 	return &cfg, nil

@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
@@ -33,9 +35,14 @@ func main() {
 		log.PrintError(ctx, err, nil)
 	}
 
+    _, err = initializeDatabase(cfg.DBURL, log, ctx)
+    if err != nil {
+        log.PrintError(ctx, err, nil)
+    }
+
 	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
-
+ 
 	coord, err := coordinators.NewDownloadCoordinator(ctx, cfg, log)
 	if err != nil {
 		log.PrintError(ctx, err, nil)
@@ -60,4 +67,25 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 	}
 	multiWriter := io.MultiWriter(logFile, os.Stdout)
 	return jsonlog.New(multiWriter, slog.LevelInfo), nil
+}
+
+func initializeDatabase(dsn string, log *jsonlog.Logger, ctx context.Context) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	log.PrintInfo(ctx, "Connected to the database", nil)
+	return db, nil
 }

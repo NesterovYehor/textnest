@@ -1,4 +1,4 @@
-db_url: "postgresql://textnest:password@postgres:5432/textnest_db?sslmode=disable"
+db_url: "postgres://textnest:textnest_password@postgres:5432/textnestdb?sslmode=disable"
 bucket_name: "textnestbucket"
 expiration_interval: "1m"
 kafka:

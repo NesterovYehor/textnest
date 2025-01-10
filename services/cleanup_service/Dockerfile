@@ -1,5 +1,6 @@
 # Use the official Go image as the base
 FROM golang:1.23
+ENV GOFLAGS=-mod=readonly
 
 # Set the working directory inside the container
 WORKDIR /app

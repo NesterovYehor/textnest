@@ -27,19 +27,14 @@ func TestProcessExpirations(t *testing.T) {
 
 	// Kafka options
 	topicName := "example-topic"
-	opts := &container.KafkaContainerOpts{
-		ClusterID:         "test-cluster",
-		Topics:            map[string]int32{topicName: 1},
-		ReplicationFactor: 1,
-	}
 
 	// Start Kafka container
-	kafkaContainer, brokerAddr, err := container.StartKafka(ctx, opts)
+	kafkaContainerSetUp, err := container.StartKafka(ctx)
 	assert.NoError(t, err)
-	defer kafkaContainer.Terminate(ctx)
+	defer kafkaContainerSetUp.CleanUp()
 
 	// Configure Kafka producer
-	kafkaCfg := kafka.LoadKafkaConfig([]string{brokerAddr}, []string{topicName}, "no-group", 1)
+	kafkaCfg := kafka.LoadKafkaConfig(kafkaContainerSetUp.BrokerAddr, []string{topicName}, "no-group", 1)
 	kafkaProd, err := kafka.NewProducer(*kafkaCfg, ctx)
 	assert.NoError(t, err)
 

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	"github.com/NesterovYehor/TextNest/pkg/logger"
@@ -25,6 +26,10 @@ func (f *ServiceFactory) CreateFetchMetadataService(ctx context.Context) (*Fetch
 	db, err := f.openDB()
 	if err != nil {
 		return nil, err
+	}
+	if err := db.PingContext(ctx); err != nil {
+        f.log.PrintError(ctx, fmt.Errorf("failed to ping database: %w", err), nil)
+		return nil, err 
 	}
 	metadataRepo := repository.NewMetadataRepo(db)
 	kafkaProducer, err := kafka.NewProducer(f.cfg.Kafka, ctx)

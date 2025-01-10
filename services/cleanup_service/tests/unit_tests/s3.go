@@ -12,7 +12,7 @@ import (
 
 // Returns an error if setup fails, along with a cleanup function to clean up resources.
 func SetUpTestS3(ctx context.Context) (func(), error) {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(S3TestData.Region))
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatalf("Failed to load AWS config: %v", err)
 		return func() {}, err
@@ -24,7 +24,6 @@ func SetUpTestS3(ctx context.Context) (func(), error) {
 		Bucket: aws.String(S3TestData.Bucket),
 	})
 	if err != nil {
-		log.Println("PENIS")
 		return nil, err
 	}
 
@@ -35,14 +34,13 @@ func SetUpTestS3(ctx context.Context) (func(), error) {
 		Body:   strings.NewReader(S3TestData.Content),
 	})
 	if err != nil {
-		log.Println("PENIS_2")
 		return nil, err
 	}
 
 	// Return cleanup function
 	cleanup := func() {
 		log.Println("Cleaning up test S3 bucket...")
-		err := clearTestS3(ctx)
+		err := clearTestS3(ctx, cfg)
 		if err != nil {
 			log.Printf("Failed to clean up test S3 bucket: %v", err)
 		}
@@ -51,12 +49,7 @@ func SetUpTestS3(ctx context.Context) (func(), error) {
 }
 
 // clearTestS3 deletes all objects in the test bucket and then deletes the bucket.
-func clearTestS3(ctx context.Context) error {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(S3TestData.Region))
-	if err != nil {
-		return err
-	}
-
+func clearTestS3(ctx context.Context, cfg aws.Config) error {
 	s3Client := s3.NewFromConfig(cfg)
 
 	// List all objects in the bucket

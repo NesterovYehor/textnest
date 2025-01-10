@@ -1,8 +1,8 @@
 upload_service:
-  port: "localhost:50052"
+  port: "upload_service:50052"
 download_service:
-  port: "localhost:50053"
+  port: "download_service:50053"
 key_service:
-  port: "localhost:50054"
+  port: "key_generation_service:50054"
 
-addr: ":6578"
+addr: ":50051"

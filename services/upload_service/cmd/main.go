@@ -83,6 +83,7 @@ func initializeDatabase(dsn string, log *jsonlog.Logger, ctx context.Context) (*
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
+        log.PrintInfo(ctx, dsn, nil)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 

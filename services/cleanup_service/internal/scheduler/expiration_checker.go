@@ -11,20 +11,19 @@ import (
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/services"
 )
 
-type Scheduler struct {
+type Checker struct {
 	service *services.ExpirationService
 	log     *jsonlog.Logger
 }
 
-func NewScheduler(service *services.ExpirationService, log *jsonlog.Logger) *Scheduler {
-
-	return &Scheduler{
+func NewChecker(service *services.ExpirationService, log *jsonlog.Logger) *Checker {
+	return &Checker{
 		service: service,
 		log:     log,
 	}
 }
 
-func (s *Scheduler) Start(ctx context.Context, interval time.Duration) {
+func (s *Checker) Start(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -36,11 +35,9 @@ func (s *Scheduler) Start(ctx context.Context, interval time.Duration) {
 	for {
 		select {
 		case <-ticker.C:
-			s.log.PrintInfo(ctx, "Triggering expiration service", nil)
 			if err := s.service.ProcessExpirations(ctx); err != nil {
 				s.log.PrintError(ctx, err, nil)
 			}
-			s.log.PrintInfo(ctx, "Expiration service run completed", nil)
 
 		case <-stopSignal:
 			s.log.PrintInfo(ctx, "Received shutdown signal, stopping scheduler", nil)

@@ -3,7 +3,7 @@ module github.com/NesterovYehor/TextNest/services/cleanup_service
 go 1.23.3
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241226092959-290ed3d733e5
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241226222352-5cdf5d16bb68
 	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.1

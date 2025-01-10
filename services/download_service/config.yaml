@@ -10,7 +10,7 @@ kafka:
 
 bucket_name: "textnestbucket"
 region: "eu-north-1"
-db: "postgresql://textnest:password@postgres:5432/textnest_db?sslmode=disable"
+db: "postgres://textnest:textnest_password@postgres:5432/textnestdb?sslmode=disable"
 metadata_cache_addr: ":6378"
 content_cache_addr: ":6380"
 expiration_interval: "5m"
