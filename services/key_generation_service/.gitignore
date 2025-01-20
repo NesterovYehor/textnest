@@ -1,5 +1,0 @@
-.env
-vendor
-app.log
-.dockerignore
-DockerFile

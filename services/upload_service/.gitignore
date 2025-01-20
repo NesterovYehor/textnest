@@ -1,7 +1,0 @@
-.env
-.env.test
-Dockerfile
-vendor
-main*
-app.log
-config.development.yaml

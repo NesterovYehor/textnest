@@ -1,5 +1,0 @@
-grpc:
-  port: "50052"
-db: "postgres://textnest:textnest_password@postgres:5432/textnestdb?sslmode=disable"
-bucket_name: "textnestbucket"
-region: "us-east-1"

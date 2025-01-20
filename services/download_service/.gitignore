@@ -1,7 +1,0 @@
-vendor
-.env
-Dockerfile
-.dockerignore
-/build
-app.log
-.env.test
