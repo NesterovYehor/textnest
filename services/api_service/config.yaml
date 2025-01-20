@@ -1,8 +1,0 @@
-upload_service:
-  port: "upload_service:50052"
-download_service:
-  port: "download_service:50053"
-key_service:
-  port: "key_generation_service:50054"
-
-addr: ":50051"
