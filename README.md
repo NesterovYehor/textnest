@@ -70,4 +70,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For inquiries or feedback, contact via GitHub: [NesterovYehor](https://github.com/NesterovYehor) or Discord: Nest.
+For inquiries or feedback, contact via GitHub: [NesterovYehor](https://github.com/NesterovYehor) or Discord: https://discordapp.com/users/591678870973841428.
