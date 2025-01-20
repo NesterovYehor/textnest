@@ -49,7 +49,7 @@ func main() {
 
 	// Initialize key management repository
 	repo := repository.NewRepository(redisClient)
-	repo.FillKeys(10000) // Ensure a minimum threshold of unused keys
+	repo.FillKeys(100) // Ensure a minimum threshold of unused keys
 
 	// Start gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
