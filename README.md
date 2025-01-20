@@ -58,49 +58,7 @@ This architecture ensures a balance of high-speed communication through gRPC and
 
 ## Usage
 
-Users can connect to TextNest via SSH for a simple and efficient interface to create and manage pastes anonymously. A sample SSH client is available [here](https://github.com/NesterovYehor/TextNest).
-
----
-
-## Contributing
-
-Contributions to the TextNest project are welcome! If you'd like to help improve the project, follow these steps:
-
-1. **Fork the Repository**:
-   - Click the "Fork" button at the top right of the repository to create a copy of the repository under your GitHub account.
-
-2. **Clone the Repository**:
-   - Clone your fork to your local machine:
-     ```bash
-     git clone https://github.com/your-username/textnest.git
-     ```
-
-3. **Create a New Branch**:
-   - It’s a good practice to create a separate branch for your feature or bug fix:
-     ```bash
-     git checkout -b feature/your-feature-name
-     ```
-
-4. **Make Your Changes**:
-   - Make the necessary changes or additions to the codebase.
-   - Test your changes to ensure they work as expected.
-
-5. **Commit Your Changes**:
-   - After making your changes, commit them with a descriptive message:
-     ```bash
-     git commit -m "Describe the changes you made"
-     ```
-
-6. **Push to Your Fork**:
-   - Push your changes to the branch you created on your fork:
-     ```bash
-     git push origin feature/your-feature-name
-     ```
-
-7. **Open a Pull Request**:
-   - Go to the GitHub page for the TextNest repository and click on "Pull Request."
-   - Select your branch and compare it with the base branch of the main repository.
-   - Provide a brief description of your changes and submit the pull request.
+Users can connect to TextNest via SSH for a simple and efficient interface to create and manage pastes anonymously. A sample SSH client is available [here](https://github.com/NesterovYehor/txtnest-cli).
 
 ---
 
@@ -112,4 +70,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For inquiries or feedback, contact Yehor Nesterov via GitHub: [NesterovYehor](https://github.com/NesterovYehor).
+For inquiries or feedback, contact via GitHub: [NesterovYehor](https://github.com/NesterovYehor) or Discord: Nest.
