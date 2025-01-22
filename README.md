@@ -45,10 +45,10 @@ TextNest is built with a modern stack of technologies to deliver high performanc
 TextNest's backend is organized into multiple microservices to ensure modularity and scalability. Key components include:
 
 1. **API Service**: Central gateway for user interactions, delegating tasks to other services via gRPC.
-2. **Hash Generator Service**: Generates unique identifiers for text files.
+2. **Key Generator Service(KGS)**: Generates unique identifiers for each paste files.
 3. **Upload Service**: Handles the storage of user data to Amazon S3 and updates metadata in PostgreSQL.
 4. **Download Service**: Manages the retrieval of stored data and delivers it to users.
-5. **Expiration Service**: Periodically identifies expired content and triggers clean-up operations across services.
+5. **Clean up Service**: Periodically identifies expired content and triggers clean-up operations across services.
 6. **gRPC and Protobufs**: Facilitate seamless and high-performance communication between all microservices.
 7. **Kafka**: Used to orchestrate complex operations involving multiple services, such as clean-up tasks triggered by the Expiration Service, ensuring data safety and consistency during concurrent operations.
 
