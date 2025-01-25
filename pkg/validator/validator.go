@@ -1,5 +1,7 @@
 package validator
 
+import "regexp"
+
 type Validator struct {
 	Errors map[string]string
 }
@@ -22,4 +24,8 @@ func (v *Validator) Check(ok bool, key, msg string) {
 
 func (v *Validator) Valid() bool {
 	return len(v.Errors) == 0
+}
+
+func Match(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }
