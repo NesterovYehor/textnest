@@ -18,6 +18,7 @@ var (
 // KeyGeneratorClient wraps the generated gRPC client for easier use.
 type KeyGeneratorClient struct {
 	client key_generation.KeyGeneratorClient
+	conn   *grpc.ClientConn
 }
 
 // NewKeyGeneratorClient creates a new KeyGeneratorClient and establishes a connection to the given target.
@@ -31,10 +32,15 @@ func NewKeyGeneratorClient(target string) (*KeyGeneratorClient, error) {
 		}
 		// Return a new KeyGeneratorClient initialized with the gRPC client.
 		keyGenClient = &KeyGeneratorClient{
+			conn:   conn,
 			client: key_generation.NewKeyGeneratorClient(conn),
 		}
 	})
 	return keyGenClient, clientInitError
+}
+
+func (c *KeyGeneratorClient) Close() error {
+	return c.conn.Close()
 }
 
 // GetKey sends a request to the Key Generator service to fetch a key.

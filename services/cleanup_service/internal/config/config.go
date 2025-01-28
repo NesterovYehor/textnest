@@ -26,7 +26,7 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 	}
 	data, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read configuration file: %w", err)
+        return nil, fmt.Errorf("failed to read configuration file: %w, on path: %v", err, path)
 	}
 	defer data.Close()
 

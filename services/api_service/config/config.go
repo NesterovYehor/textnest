@@ -14,6 +14,7 @@ import (
 type Config struct {
 	UploadService   *grpc.GrpcConfig `yaml:"upload_service"`
 	DownloadService *grpc.GrpcConfig `yaml:"download_service"`
+	AuthService     *grpc.GrpcConfig `yaml:"auth_service"`
 	KeyService      *grpc.GrpcConfig `yaml:"key_service"`
 	HttpAddr        string           `yaml:"addr"`
 }

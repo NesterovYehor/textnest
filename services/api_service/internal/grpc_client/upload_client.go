@@ -12,6 +12,7 @@ import (
 
 type UploadClient struct {
 	client paste_upload.PasteUploadClient
+	conn   *grpc.ClientConn
 }
 
 // Creates a new UploadClient and establishes a connection to the gRPC server
@@ -20,7 +21,11 @@ func NewUploadClient(target string) (*UploadClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &UploadClient{client: paste_upload.NewPasteUploadClient(conn)}, nil
+	return &UploadClient{client: paste_upload.NewPasteUploadClient(conn), conn: conn}, nil
+}
+
+func (c *UploadClient) Close() error {
+	return c.conn.Close()
 }
 
 // Upload method calls the gRPC Upload RPC

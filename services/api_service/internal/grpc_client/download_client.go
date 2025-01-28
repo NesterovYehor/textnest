@@ -10,6 +10,7 @@ import (
 
 type DownloadClient struct {
 	client paste_download.PasteDownloadClient
+	conn   *grpc.ClientConn
 }
 
 func NewDownloadClient(target string) (*DownloadClient, error) {
@@ -17,7 +18,11 @@ func NewDownloadClient(target string) (*DownloadClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DownloadClient{client: paste_download.NewPasteDownloadClient(conn)}, nil
+	return &DownloadClient{client: paste_download.NewPasteDownloadClient(conn), conn: conn}, nil
+}
+
+func (c *DownloadClient) Close() error {
+	return c.conn.Close()
 }
 
 func (c *DownloadClient) Download(key string) (*paste_download.DownloadResponse, error) {

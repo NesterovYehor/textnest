@@ -24,7 +24,7 @@ func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
 	// Read CONFIG_PATH from environment
 	path := os.Getenv("CONFIG_PATH")
 	if path == "" {
-		return nil, fmt.Errorf("CONFIG_PATH environment variable is not set")
+		path = "config.yaml" // Default path
 	}
 	data, err := os.Open(path)
 	if err != nil {

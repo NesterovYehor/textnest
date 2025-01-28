@@ -37,10 +37,17 @@ func main() {
 		logger.PrintFatal(ctx, fmt.Errorf("failed to initialize app context: %w", err), nil)
 		return
 	}
+	defer func() {
+		if err := appContext.Close(); err != nil {
+			logger.PrintError(ctx, err, nil)
+		}
+	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/upload", uploadPasteHandler(cfg, appContext, logger))
 	mux.HandleFunc("/v1/download", downloadPasteHandler(cfg, appContext, logger))
+	mux.HandleFunc("/v1/signup", handler.SignUpHandler(appContext, ctx))
+	mux.HandleFunc("/v1/login", handler.LogInHandler(appContext, ctx))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
