@@ -48,10 +48,22 @@ message AuthenticateUserResponse {
     int64 expires_in = 3;      // Optional: token TTL in seconds
 }
 
+
+// --------------------------
+// AuthorizeUser 
+// --------------------------
+message AuthorizeUserRequest {
+    string tocken = 1;
+}
+
+message AuthorizeUserResponse {
+    int64 user_id = 1;
+}
 // --------------------------
 // Service
 // --------------------------
 service AuthService {
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
     rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
+    rpc AuthorizeUser(AuthorizeUserRequest) returns (AuthorizeUserResponse);
 }

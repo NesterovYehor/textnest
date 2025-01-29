@@ -2,10 +2,12 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/NesterovYehor/TextNest/pkg/validator"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/models"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // EmailRX is a regex to validate email addresses.
@@ -55,4 +57,27 @@ func ValidateUser(user *models.User) error {
 	}
 
 	return nil
+}
+
+func ValidateJwtToken(tokenString, secret, expectedType string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse token claims")
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != expectedType {
+		return nil, fmt.Errorf("incorrect token type: expected %s, got %s", expectedType, tokenType)
+	}
+
+	return token, nil
 }

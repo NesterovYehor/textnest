@@ -14,6 +14,7 @@ import (
 	"github.com/NesterovYehor/TextNest/services/api_service/config"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/handler"
+	"github.com/NesterovYehor/TextNest/services/api_service/internal/midlewares"
 )
 
 func main() {
@@ -44,7 +45,7 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/upload", uploadPasteHandler(cfg, appContext, logger))
+	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(cfg, appContext, ctx))))
 	mux.HandleFunc("/v1/download", downloadPasteHandler(cfg, appContext, logger))
 	mux.HandleFunc("/v1/signup", handler.SignUpHandler(appContext, ctx))
 	mux.HandleFunc("/v1/login", handler.LogInHandler(appContext, ctx))
@@ -82,13 +83,6 @@ func downloadPasteHandler(cfg *config.Config, appContext *app.AppContext, logger
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.PrintInfo(r.Context(), "Request received", nil)
 		handler.DownloadPaste(w, r, cfg, r.Context(), appContext)
-	}
-}
-
-func uploadPasteHandler(cfg *config.Config, appContext *app.AppContext, logger *jsonlog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		logger.PrintInfo(r.Context(), "Request received", nil)
-		handler.UploadPaste(w, r, cfg, r.Context(), appContext)
 	}
 }
 

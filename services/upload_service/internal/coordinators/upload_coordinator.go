@@ -4,9 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	pb "github.com/NesterovYehor/TextNest/services/upload_service/api"
@@ -39,12 +43,33 @@ func NewUploadCoordinator(cfg *config.Config, log *jsonlog.Logger, db *sql.DB) (
 }
 
 func (uc *UploadCoordinator) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
+	var userID *int64
+	if req.UserId != "" {
+		parsedID, err := strconv.ParseInt(req.UserId, 10, 64)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid user ID format: %v", err)
+		}
+		if parsedID <= 0 {
+			return nil, status.Error(codes.InvalidArgument, "user ID must be positive integer")
+		}
+		userID = &parsedID
+	}
+
 	metadata := models.MetaData{
 		Key:            req.Key,
 		ExpirationDate: req.ExpirationDate.AsTime(),
 		CreatedAt:      time.Now(),
+		UserId:         userID,
 	}
-
+	if req.UserId == "" {
+		metadata.UserId = nil
+	} else {
+		userId, err := strconv.ParseInt(req.UserId, 0, 16)
+		if err != nil {
+			return nil, err
+		}
+		metadata.UserId = &userId
+	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

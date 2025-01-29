@@ -57,3 +57,7 @@ func (srv *UserService) GetUserByEmail(email, passwordPlaintext string) (int64, 
 	}
 	return user.ID, nil
 }
+
+func (srv *UserService) UserExists(userId int64) (bool, error) {
+	return srv.model.UserExists(userId)
+}

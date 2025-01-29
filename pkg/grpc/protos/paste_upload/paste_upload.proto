@@ -14,7 +14,7 @@ service PasteUpload {
 // Upload request message
 message UploadRequest {
     string key = 1;                                // Unique paste key
-    string userId = 2;                             // User id 
+    int64 userId = 2;                             // User id 
     google.protobuf.Timestamp expiration_date = 3; // Expiration date
     bytes data = 4;                                // Paste content as bytes
 }

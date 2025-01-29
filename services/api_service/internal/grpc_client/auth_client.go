@@ -57,3 +57,19 @@ func (c *AuthClient) LogIn(email, password string) (*auth.AuthenticateUserRespon
 	}
 	return res, nil
 }
+
+func (c *AuthClient) AuthorizeUser(token string) (int64, error) {
+	req := auth.AuthorizeUserRequest{
+		Tocken: token,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	res, err := c.client.AuthorizeUser(ctx, &req)
+	if err != nil {
+		return res.UserId, err
+	}
+
+	return res.UserId, nil
+}

@@ -68,6 +68,22 @@ func (model *UserModel) Insert(user *User) error {
 	return nil
 }
 
+func (model *UserModel) UserExists(userId int64) (bool, error) {
+	var exist bool
+	query := `
+    SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)
+    `
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err := model.db.QueryRowContext(ctx, query, userId).Scan(&exist)
+	if err != nil {
+		return false, err
+	}
+
+	return exist, nil
+}
+
 func (model *UserModel) GetByEmail(email string) (*User, error) {
 	query := `
         SELECT id, created_at, name, email, password_hash, activated

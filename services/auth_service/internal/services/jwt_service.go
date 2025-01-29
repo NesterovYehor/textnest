@@ -1,9 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/NesterovYehor/textnest/services/auth_service/config"
+	"github.com/NesterovYehor/textnest/services/auth_service/internal/validation"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -15,6 +17,35 @@ func NewJwtService(jwtCfg *config.JwtConfig) *JwtService {
 	return &JwtService{
 		JwtConfig: jwtCfg,
 	}
+}
+
+func (srv *JwtService) ExtractUserID(token string, expectedType string) (*int64, error) {
+	secret := ""
+	if expectedType == "access" {
+		secret = srv.JwtConfig.AccessSecret
+	} else {
+		secret = srv.JwtConfig.RefreshSecret
+	}
+	// Validate the token
+	parsedToken, err := validation.ValidateJwtToken(token, secret, expectedType)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token: %v", err)
+	}
+
+	// Extract claims from the token
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse token claims")
+	}
+
+	// Extract user ID from claims
+	userID, ok := claims["user_id"].(int64)
+	if !ok {
+		return nil, fmt.Errorf("user_id not found or invalid in token claims")
+	}
+
+	// Return user ID
+	return &userID, nil
 }
 
 func (srv *JwtService) GenerateAccessTocken(userId int64) (string, error) {
