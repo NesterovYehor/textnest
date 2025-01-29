@@ -41,3 +41,8 @@ func IncorrectUrlParams(w http.ResponseWriter, param string) {
 func FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
 	errorResponse(w, http.StatusUnprocessableEntity, errors)
 }
+
+func NoTokenProvided(w http.ResponseWriter) {
+	message := "Unauthorized: No token provided"
+	errorResponse(w, http.StatusUnauthorized, message)
+}

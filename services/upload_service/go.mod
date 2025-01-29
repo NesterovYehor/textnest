@@ -32,9 +32,7 @@ require (
 
 require (
 	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241219115743-1fc570c286c3
-	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.44
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.1
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
@@ -42,7 +40,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/aws/aws-sdk-go-v2 v1.32.7 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

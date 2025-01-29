@@ -29,7 +29,7 @@ func (c *UploadClient) Close() error {
 }
 
 // Upload method calls the gRPC Upload RPC
-func (c *UploadClient) Upload(key string, expirationDate time.Time, data []byte) (string, error) {
+func (c *UploadClient) Upload(key string, userId int64, expirationDate time.Time, data []byte) (string, error) {
 	resp, err := c.client.Upload(context.Background(), &paste_upload.UploadRequest{
 		Key:            key,
 		ExpirationDate: timestamppb.New(expirationDate),

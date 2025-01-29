@@ -13,7 +13,7 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	pb "github.com/NesterovYehor/TextNest/services/upload_service/internal/api"
+	pb "github.com/NesterovYehor/TextNest/services/upload_service/api"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/coordinators"
 	_ "github.com/lib/pq" // PostgreSQL driver

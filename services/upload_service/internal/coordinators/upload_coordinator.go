@@ -9,7 +9,7 @@ import (
 	"time"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	pb "github.com/NesterovYehor/TextNest/services/upload_service/internal/api"
+	pb "github.com/NesterovYehor/TextNest/services/upload_service/api"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"

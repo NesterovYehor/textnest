@@ -35,11 +35,18 @@ func NewMetadataRepository(db *sql.DB) MetadataRepository {
 func (repo *metadataRepository) UploadPasteMetadata(ctx context.Context, data *models.MetaData) error {
 	operation := func(ctx context.Context) (any, error) {
 		query := `
-        INSERT INTO metadata(key, created_at, expiration_date) 
-        VALUES ($1, $2, $3)
+        INSERT INTO metadata(key, userId, created_at, expiration_date) 
+        VALUES ($1, $2, $3, $4)
         `
+
+		args := []any{
+			data.Key,
+			data.UserId,
+			data.CreatedAt,
+			data.ExpirationDate,
+		}
 		// Execute the query
-		_, err := repo.DB.ExecContext(ctx, query, data.Key, data.CreatedAt, data.ExpirationDate)
+		_, err := repo.DB.ExecContext(ctx, query, args...)
 		return nil, err
 	}
 
