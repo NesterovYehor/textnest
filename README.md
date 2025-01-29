@@ -1,73 +1,151 @@
-# TextNest
+# 🚀 TextNest – The Terminal-Powered Code Sharing Tool
 
-TextNest is a backend-focused project designed to handle the storage and management of text-based data efficiently. It allows users to interact with the system via SSH and provides features like anonymous usage and future support for organized data management. Built with a modern microservices architecture, TextNest leverages technologies like Go, gRPC, Protobufs, Redis, PostgreSQL, and Kafka to ensure scalability, reliability, and performance.
+## 🧐 The Story Behind TextNest  
 
----
+It all started when I stumbled upon [terminal.shop](https://terminal.shop) (by the way, they serve the **best coffee in your terminal!** ☕). It was such a cool and effortless experience that it sparked an idea:
 
-## Features
+> *What if there was a tool for developers who are tired of building UIs but still need a fast, secure way to share code snippets?*
 
-- **Anonymous Access**: Users can interact with the system anonymously via SSH, making it simple and fast to use without requiring authentication.
-- **Microservices Architecture**: Modular design with specialized services for handling different functionalities such as uploads, downloads, and metadata management.
-- **Fast and Reliable Communication**: 
-  - **gRPC and Protobufs** are used for efficient and high-performance communication between microservices.
-  - **Kafka** is selectively employed to manage interactions requiring coordination across multiple services or where data consistency and safety are prioritized.
-- **Efficient Storage**: Uses Amazon S3 for blob storage and PostgreSQL for metadata storage.
-- **In-Memory Caching**: Redis accelerates access to frequently used data.
-- **Scalability**: Designed with scalability in mind, leveraging Docker and Kubernetes (optional) for containerized deployment.
+That’s how **TextNest** was born – a **developer-first, terminal-friendly tool** designed to make text and code sharing **blazing fast, secure, and scalable** without the clutter of traditional interfaces.
 
 ---
 
-## Technologies Used
+## 📌 Why TextNest?
 
-TextNest is built with a modern stack of technologies to deliver high performance and maintainability:
+### 🔥 Designed for Speed, Security & Simplicity
 
-### Programming Language
-- **Go**: The main language for implementing the backend, chosen for its strong concurrency model, simplicity, and performance.
-
-### Communication
-- **gRPC and Protobufs**: The primary means of communication between microservices, offering high performance, type safety, and lightweight message serialization.
-- **Kafka**: Used strategically for asynchronous messaging in scenarios that involve multiple services or require data safety, ensuring consistent and reliable processing.
-
-### Data Storage
-- **PostgreSQL**: Manages structured metadata storage, offering robustness and ACID compliance.
-- **Amazon S3**: Provides scalable and durable blob storage for text files.
-
-### Caching
-- **Redis**: Improves performance by caching frequently accessed data.
-
-### Configuration Management
-- **YAML**: Configuration files manage service settings, including Redis and PostgreSQL connections.
+✅ **Fast & Scalable** – Built with microservices for maximum performance.  
+✅ **Secure** – JWT authentication ensures safe access.  
+✅ **Developer-Friendly** – API-first approach, with an **SSH interface coming soon!**  
+✅ **Reliable Storage** – Metadata in PostgreSQL, caching with Redis, and files in Amazon S3.  
+✅ **Minimalist, Terminal-First Approach** – No need for UIs. Just focus on **getting things done.**  
 
 ---
 
-## Architecture Overview
+## 🛠️ Tech Stack – What’s Under the Hood?
 
-TextNest's backend is organized into multiple microservices to ensure modularity and scalability. Key components include:
+| **Technology**  | **Purpose** |
+|---------------|------------|
+| **Go** | High-performance language, ideal for microservices. |
+| **gRPC** | Efficient, lightweight service-to-service communication. |
+| **PostgreSQL** | Secure storage for metadata. |
+| **Redis** | In-memory caching for speed. |
+| **Amazon S3** | Reliable, scalable file storage. |
+| **Kafka** | Event-driven architecture for automated paste expiration. |
+| **Docker** | Simplifies deployment and scalability. |
+| **Nginx** | Load balancing for high availability. |
+| **JWT (Auth Service)** | Ensures secure authentication. |
 
-1. **API Service**: Central gateway for user interactions, delegating tasks to other services via gRPC.
-2. **Key Generator Service(KGS)**: Generates unique identifiers for each paste files.
-3. **Upload Service**: Handles the storage of user data to Amazon S3 and updates metadata in PostgreSQL.
-4. **Download Service**: Manages the retrieval of stored data and delivers it to users.
-5. **Clean up Service**: Periodically identifies expired content and triggers clean-up operations across services.
-6. **gRPC and Protobufs**: Facilitate seamless and high-performance communication between all microservices.
-7. **Kafka**: Used to orchestrate complex operations involving multiple services, such as clean-up tasks triggered by the Expiration Service, ensuring data safety and consistency during concurrent operations.
-
-This architecture ensures a balance of high-speed communication through gRPC and Protobufs while leveraging Kafka for critical operations requiring robust message handling and service coordination.
-
----
-
-## Usage
-
-Users can connect to TextNest via SSH for a simple and efficient interface to create and manage pastes anonymously. A sample SSH client is available [here](https://github.com/NesterovYehor/txtnest-cli).
+With this tech stack, **TextNest is built to perform at scale while ensuring security and developer efficiency.**
 
 ---
 
-## License
+## 🔧 System Architecture – How It Works
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+TextNest is a **microservices-based** application with distinct services:
+
+🛜 **API Service** – Handles all HTTP requests.  
+🔐 **Auth Service** – Manages user authentication via JWT.  
+📤 **Upload Service** – Securely stores pastes in S3.  
+📥 **Download Service** – Retrieves stored pastes securely.  
+🔑 **Hash Generator** – Generates unique IDs for pastes.  
+⏳ **Expiration Service** – Deletes expired pastes using Kafka.  
+💾 **Metadata Storage** – PostgreSQL (structured data) + Redis (caching).  
+
+Everything runs in **Docker**, making deployment a breeze! 🐳
 
 ---
 
-## Contact
+## 🚀 Getting Started – Set Up in Minutes
 
-For inquiries or feedback, contact via GitHub: [NesterovYehor](https://github.com/NesterovYehor) or [Discord](https://discordapp.com/users/591678870973841428).
+### 📂 Clone the Repository
+
+```bash
+git clone https://github.com/NesterovYehor/textnest.git
+cd textnest
+```
+
+### ⚙️ Configure the Services
+
+Most services use `.yaml` configuration files. Example API config:
+
+```yaml
+database:
+  user: youruser
+  password: yourpassword
+s3:
+  bucket: textnest-bucket
+redis:
+  url: redis://localhost:6379
+auth:
+  service_url: http://auth-service:8081
+jwt:
+  secret: your_secret_key
+```
+
+### 🏃‍♂️ Run Everything with Docker
+
+```bash
+docker-compose up -d
+```
+
+Once running, your API should be available at:
+
+```
+http://localhost:8080
+```
+
+For authentication, the Auth Service runs on:
+
+```
+http://localhost:8081
+```
+
+---
+
+## 📡 Using the API – Quick Example
+
+**Create a new snippet:**
+```bash
+curl -X POST http://localhost:8080/api/snippet \
+     -H "Authorization: Bearer <your_token>" \
+     -d '{"text": "Hello, World!", "expires_in": 3600}'
+```
+
+**Retrieve a snippet:**
+```bash
+curl -X GET http://localhost:8080/api/snippet/<paste_id>
+```
+
+**Delete a snippet:**
+```bash
+curl -X DELETE http://localhost:8080/api/snippet/<paste_id>
+```
+
+Simple. Fast. Secure. ✅
+
+---
+
+## 🔮 What’s Next?
+
+🚀 **SSH Interface** – Share and retrieve pastes directly from the terminal.
+🎛️ **Admin Dashboard** – For advanced management and monitoring.
+🔄 **Public & Private Snippets** – More control over who sees what.
+
+---
+
+## 🐝 License
+
+TextNest is open-source and licensed under the **MIT License**. See [LICENSE](./LICENSE) for details.
+
+---
+
+## 📬 Contact
+
+📧 **Email:** [yehor.nesterov@example.com](mailto:yehor.nesterov@example.com)  
+🤖 **GitHub Issues:** [Open an Issue](https://github.com/NesterovYehor/textnest/issues)  
+
+---
+
+🔥 **TextNest – Fast. Secure. Developer-Friendly.** 🔥
+
