@@ -93,17 +93,6 @@ jwt:
 docker-compose up -d
 ```
 
-Once running, your API should be available at:
-
-```
-http://localhost:8080
-```
-
-For authentication, the Auth Service runs on:
-
-```
-http://localhost:8081
-```
 
 ---
 
