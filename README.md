@@ -1,28 +1,32 @@
-# 🚀 TextNest – The Terminal-Powered Code Sharing Tool
+# TextNest – The Terminal-Powered Code Sharing Tool
 
-## 🧐 The Story Behind TextNest  
+## The Story Behind TextNest  
 
-It all started when I stumbled upon [terminal.shop](https://terminal.shop) (by the way, they serve the **best coffee in your terminal!** ☕). It was such a cool and effortless experience that it sparked an idea:
+It all started when I stumbled upon [terminal.shop](https://terminal.shop) (by the way, they serve the best coffee in your terminal!). It was such a cool and effortless experience that it sparked an idea:
 
 > *What if there was a tool for developers who are tired of building UIs but still need a fast, secure way to share code snippets?*
 
-That’s how **TextNest** was born – a **developer-first, terminal-friendly tool** designed to make text and code sharing **blazing fast, secure, and scalable** without the clutter of traditional interfaces.
+That’s how **TextNest** was born – a **developer-first, terminal-friendly tool** designed to make text and code sharing fast, secure, and scalable without the clutter of traditional interfaces.
+
+This repository contains the **backend** side of the project. Here, you'll find all the details about the **technical implementation, architectural decisions, and design choices** that make TextNest what it is. For more details on the broader project, check out the full documentation.
+
+For the **CLI/SSH tool**, check out the companion repository: [txtnest-cli](https://github.com/NesterovYehor/txtnest-cli).
 
 ---
 
-## 📌 Why TextNest?
+## Why TextNest?
 
-### 🔥 Designed for Speed, Security & Simplicity
+### Designed for Speed, Security & Simplicity
 
-✅ **Fast & Scalable** – Built with microservices for maximum performance.  
-✅ **Secure** – JWT authentication ensures safe access.  
-✅ **Developer-Friendly** – API-first approach, with an **SSH interface coming soon!**  
-✅ **Reliable Storage** – Metadata in PostgreSQL, caching with Redis, and files in Amazon S3.  
-✅ **Minimalist, Terminal-First Approach** – No need for UIs. Just focus on **getting things done.**  
+- **Fast & Scalable** – Built with microservices for maximum performance.  
+- **Secure** – JWT authentication ensures safe access.  
+- **Developer-Friendly** – API-first approach, with an SSH interface coming soon.  
+- **Reliable Storage** – Metadata in PostgreSQL, caching with Redis, and files in Amazon S3.  
+- **Minimalist, Terminal-First Approach** – No need for UIs. Just focus on getting things done.  
 
 ---
 
-## 🛠️ Tech Stack – What’s Under the Hood?
+## Tech Stack – What’s Under the Hood?
 
 | **Technology**  | **Purpose** |
 |---------------|------------|
@@ -40,32 +44,32 @@ With this tech stack, **TextNest is built to perform at scale while ensuring sec
 
 ---
 
-## 🔧 System Architecture – How It Works
+## System Architecture – How It Works
 
 TextNest is a **microservices-based** application with distinct services:
 
-🛜 **API Service** – Handles all HTTP requests.  
-🔐 **Auth Service** – Manages user authentication via JWT.  
-📤 **Upload Service** – Securely stores pastes in S3.  
-📥 **Download Service** – Retrieves stored pastes securely.  
-🔑 **Hash Generator** – Generates unique IDs for pastes.  
-⏳ **Expiration Service** – Deletes expired pastes using Kafka.  
-💾 **Metadata Storage** – PostgreSQL (structured data) + Redis (caching).  
+- **API Service** – Handles all HTTP requests.  
+- **Auth Service** – Manages user authentication via JWT.  
+- **Upload Service** – Securely stores pastes in S3.  
+- **Download Service** – Retrieves stored pastes securely.  
+- **Hash Generator** – Generates unique IDs for pastes.  
+- **Expiration Service** – Deletes expired pastes using Kafka.  
+- **Metadata Storage** – PostgreSQL (structured data) + Redis (caching).  
 
-Everything runs in **Docker**, making deployment a breeze! 🐳
+Everything runs in **Docker**, making deployment a breeze.
 
 ---
 
-## 🚀 Getting Started – Set Up in Minutes
+## Getting Started – Set Up in Minutes
 
-### 📂 Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/NesterovYehor/textnest.git
 cd textnest
 ```
 
-### ⚙️ Configure the Services
+### Configure the Services
 
 Most services use `.yaml` configuration files. Example API config:
 
@@ -83,7 +87,7 @@ jwt:
   secret: your_secret_key
 ```
 
-### 🏃‍♂️ Run Everything with Docker
+### Run Everything with Docker
 
 ```bash
 docker-compose up -d
@@ -103,49 +107,28 @@ http://localhost:8081
 
 ---
 
-## 📡 Using the API – Quick Example
+## What’s Next?
 
-**Create a new snippet:**
-```bash
-curl -X POST http://localhost:8080/api/snippet \
-     -H "Authorization: Bearer <your_token>" \
-     -d '{"text": "Hello, World!", "expires_in": 3600}'
-```
+- **SSH Interface** – Share and retrieve pastes directly from the terminal.  
+- **Admin Dashboard** – For advanced management and monitoring.  
+- **Public & Private Snippets** – More control over who sees what.  
 
-**Retrieve a snippet:**
-```bash
-curl -X GET http://localhost:8080/api/snippet/<paste_id>
-```
-
-**Delete a snippet:**
-```bash
-curl -X DELETE http://localhost:8080/api/snippet/<paste_id>
-```
-
-Simple. Fast. Secure. ✅
+For the **CLI/SSH tool**, check out: [txtnest-cli](https://github.com/NesterovYehor/txtnest-cli).
 
 ---
 
-## 🔮 What’s Next?
-
-🚀 **SSH Interface** – Share and retrieve pastes directly from the terminal.
-🎛️ **Admin Dashboard** – For advanced management and monitoring.
-🔄 **Public & Private Snippets** – More control over who sees what.
-
----
-
-## 🐝 License
+## License
 
 TextNest is open-source and licensed under the **MIT License**. See [LICENSE](./LICENSE) for details.
 
 ---
 
-## 📬 Contact
+## Contact
 
-📧 **Email:** [yehor.nesterov@example.com](mailto:yehor.nesterov@example.com)  
-🤖 **GitHub Issues:** [Open an Issue](https://github.com/NesterovYehor/textnest/issues)  
+**Email:** [yehor.nesterov@example.com](mailto:yehor.nesterov@example.com)  
+**GitHub Issues:** [Open an Issue](https://github.com/NesterovYehor/textnest/issues)  
 
 ---
 
-🔥 **TextNest – Fast. Secure. Developer-Friendly.** 🔥
+**TextNest – Fast. Secure. Developer-Friendly.**
 
