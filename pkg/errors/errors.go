@@ -46,3 +46,8 @@ func NoTokenProvided(w http.ResponseWriter) {
 	message := "Unauthorized: No token provided"
 	errorResponse(w, http.StatusUnauthorized, message)
 }
+
+func RateLimitExceededResponse(w http.ResponseWriter) {
+	message := "rate limit exceeded"
+	errorResponse(w, http.StatusTooManyRequests, message)
+}

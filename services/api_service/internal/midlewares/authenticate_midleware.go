@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+
+	"golang.org/x/time/rate"
 
 	"github.com/NesterovYehor/TextNest/pkg/errors"
+	"github.com/NesterovYehor/TextNest/services/api_service/config"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 )
-
-
 
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +25,7 @@ func Authenticate(next http.Handler) http.Handler {
 		w.Header().Add("Vary", "Authorization")
 		authorizationHeader := r.Header.Get("Authorization")
 		if authorizationHeader == "" {
-            ctx := context.WithValue(r.Context(), "user_id", "")
+			ctx := context.WithValue(r.Context(), "user_id", "")
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -44,7 +46,16 @@ func Authenticate(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), "user_id", userId)
-        fmt.Println(ctx)
+		fmt.Println(ctx)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func RateLimit(cfg *config.Config, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var (
+			mu      sync.Mutex
+			clients = make(map[string]*rate.Limiter)
+		)
 	})
 }

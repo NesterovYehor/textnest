@@ -17,6 +17,11 @@ type Config struct {
 	AuthService     *grpc.GrpcConfig `yaml:"auth_service"`
 	KeyService      *grpc.GrpcConfig `yaml:"key_service"`
 	HttpAddr        string           `yaml:"addr"`
+	Limiter         struct {
+		Rps     float64
+		Burst   int
+		Enabled bool
+	}
 }
 
 // LoadConfig loads the gRPC service configuration from a YAML file.

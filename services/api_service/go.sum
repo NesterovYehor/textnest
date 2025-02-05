@@ -1,5 +1,3 @@
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20250128152751-5d7cd1bbbe7e h1:SXMv/sSVvBFd8cVYTIbKvebeFqpfirW1VpFy+Odvy4M=
-github.com/NesterovYehor/TextNest/pkg v0.0.0-20250128152751-5d7cd1bbbe7e/go.mod h1:dbBQwExcuTS3LvatSiJ0fi0e23+UyFZUpcHaBd1nrkU=
 github.com/NesterovYehor/TextNest/pkg v0.0.0-20250129114921-d068fa20cae5 h1:y5KGQwtq0aNGYhHMrXPE2liWXAP9NJI3Xz0QkIWDzXI=
 github.com/NesterovYehor/TextNest/pkg v0.0.0-20250129114921-d068fa20cae5/go.mod h1:dbBQwExcuTS3LvatSiJ0fi0e23+UyFZUpcHaBd1nrkU=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=
@@ -28,6 +26,8 @@ golang.org/x/sys v0.29.0 h1:TPYlXGxvx1MGTn2GiZDhnjPA9wZzZeGKHHmKhHYvgaU=
 golang.org/x/sys v0.29.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/text v0.21.0 h1:zyQAAkrwaneQ066sspRyJaG9VNi/YJ1NfzcGB3hZ/qo=
 golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
+golang.org/x/time v0.10.0 h1:3usCWA8tQn0L8+hFJQNgzpWbd89begxN66o1Ojdn5L4=
+golang.org/x/time v0.10.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287 h1:J1H9f+LEdWAfHcez/4cvaVBox7cOYT+IU6rgqj5x++8=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287/go.mod h1:8BS3B93F/U1juMFq9+EDk+qOT5CO1R9IzXxG3PTqiRk=
 google.golang.org/grpc v1.70.0 h1:pWFv03aZoHzlRKHWicjsZytKAiYCtNS0dHbXnIdq7jQ=

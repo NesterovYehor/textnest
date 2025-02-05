@@ -2,6 +2,7 @@ package grpc_clients
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	paste_upload "github.com/NesterovYehor/TextNest/services/api_service/api/upload_service"
@@ -65,19 +66,25 @@ func (c *UploadClient) ExpirePaste(ctx context.Context, key string, userId strin
 	return resp.Message, nil
 }
 
-func (c *UploadClient) UpdatePaste(ctx context.Context, key string, userId string, expirationDate *time.Time, data *[]byte) (string, error) {
-	// Prepare the request
+func (c *UploadClient) UpdatePaste(ctx context.Context, key string, userId string, expirationDate *time.Time, data []byte) (string, error) {
+	// Create request with required fields
 	req := &paste_upload.UploadUpdatesRequest{
-		Key:            key,
-		UserId:         userId,
-		ExpirationDate: timestamppb.New(*expirationDate),
-		Content:        *data,
+		Key:    key,
+		UserId: userId,
+	}
+
+	// Set optional fields only if they are not nil
+	if expirationDate != nil {
+		req.ExpirationDate = timestamppb.New(*expirationDate)
+	}
+	if data != nil {
+		req.Content = data
 	}
 
 	// Send gRPC request
 	resp, err := c.client.UploadUpdates(ctx, req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("gRPC UploadUpdates failed: %w", err)
 	}
 	return resp.Message, nil
 }

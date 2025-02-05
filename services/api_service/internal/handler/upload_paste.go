@@ -3,15 +3,15 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/errors"
 	"github.com/NesterovYehor/TextNest/pkg/helpers"
-	"github.com/NesterovYehor/TextNest/services/api_service/config"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/validation"
 )
 
-func UploadPasteHandler(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
+func UploadPasteHandler(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -61,4 +61,97 @@ func UploadPasteHandler(cfg *config.Config, app *app.AppContext) http.HandlerFun
 	}
 }
 
-func Update ff
+func UpdatePasteHandler(app app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		key := r.PathValue("key")
+
+		var input struct {
+			ExpirationDate *time.Time `json:"expiration_date"`
+			Content        string     `json:"content"`
+		}
+		if err := helpers.ReadJSON(w, r, &input); err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("failed to read JSON input: %w", err), nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, fmt.Errorf("invalid JSON format"))
+			return
+		}
+		if len(key) != 8 {
+			app.Logger.PrintError(ctx, fmt.Errorf("Incorrect key format: must be 8 characters"), nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, fmt.Errorf("Key must be exactly 8 characters long"))
+			return
+		}
+
+		userId, ok := ctx.Value("user_id").(string)
+		if !ok {
+			app.Logger.PrintError(ctx, fmt.Errorf("Authorization failed: user_id missing"), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("Authorization failed"))
+			return
+		}
+
+		updateRes, err := app.UploadClient.UpdatePaste(ctx, key, userId, input.ExpirationDate, []byte(input.Content))
+		if err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("Updating paste failed: %v", err), nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{"message": updateRes}
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))
+		}
+	}
+}
+
+func ExpirePasteHandler(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		key := r.PathValue("key")
+		if len(key) != 8 {
+			app.Logger.PrintError(ctx, fmt.Errorf("Incorrect key format: must be 8 characters"), nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, fmt.Errorf("Key must be exactly 8 characters long"))
+			return
+		}
+
+		userId, ok := ctx.Value("user_id").(string)
+		if !ok {
+			app.Logger.PrintError(ctx, fmt.Errorf("Authorization failed: user_id missing"), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("Authorization failed"))
+			return
+		}
+		res, err := app.UploadClient.ExpirePaste(ctx, key, userId)
+		if err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("Expiring paste failed: %v", err), nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{"message": res}
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))
+		}
+	}
+}
+
+func ExpireAllUserPastesHandler(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userId, ok := ctx.Value("user_id").(string)
+		if !ok {
+			app.Logger.PrintError(ctx, fmt.Errorf("Authorization failed: user_id missing"), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("Authorization failed"))
+			return
+		}
+		res, err := app.UploadClient.ExpireAllUserPastes(ctx, userId)
+		if err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("Expiring paste failed: %v", err), nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{"message": res}
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
+			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
+			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))
+		}
+	}
+}
