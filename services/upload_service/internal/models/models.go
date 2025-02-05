@@ -4,7 +4,7 @@ import "time"
 
 type MetaData struct {
 	Key            string
-	UserId         *int64
+	UserId         string
 	CreatedAt      time.Time
 	ExpirationDate time.Time
 }

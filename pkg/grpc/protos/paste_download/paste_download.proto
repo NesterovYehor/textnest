@@ -9,24 +9,42 @@ import "google/protobuf/timestamp.proto";
 // DownloadService provides methods for downloading objects.
 service PasteDownload{
     // Download retrieves an object by its key.
-    rpc Download (DownloadRequest) returns (DownloadResponse);
+    rpc DownloadByKey (DownloadByKeyRequest) returns (DownloadByKeyResponse);
+    
+    // DownloadByUserId retrieves a slice of objects based on userId, with pagination.
+    rpc DownloadByUserId (DownloadByUserIdRequest) returns (DownloadByUserIdResponse);
 }
 
-// DownloadRequest is the request message for downloading an object.
-message DownloadRequest {
-    string key = 1; // The unique key of the object to be downloaded.
+// Request message for downloading a slice of objects by userId.
+message DownloadByUserIdRequest {
+    string userId = 1;  // The unique userId to filter objects by.
+    int32 limit = 2;    // The maximum number of objects to retrieve (for pagination).
+    int32 offset = 3;   // The starting point in the collection of objects (for pagination).
 }
 
-// DownloadResponse is the response message containing the downloaded object and metadata.
-message DownloadResponse {
-    string key = 1; // The unique key of the downloaded object.
-    google.protobuf.Timestamp expiration_date = 2; // The expiration date of the object, if applicable.
-    google.protobuf.Timestamp created_date = 3; // The creation date of the object.
-    bytes content = 4; // The binary content of the downloaded object.
+// Response message containing the slice of downloaded objects.
+message DownloadByUserIdResponse {
+    repeated Metadata objects = 1;  // A list of objects matching the userId.
+    int32 total_count = 2;  // The total number of objects matching the userId (for pagination).
 }
 
+// Request message for downloading an object by key.
+message DownloadByKeyRequest {
+    string key = 1;  // The unique key of the object to be downloaded.
+}
+
+// Response message for downloading an object by key.
+message DownloadByKeyResponse {
+    string key = 1;  // The unique key of the downloaded object.
+    google.protobuf.Timestamp expiration_date = 2;  // The expiration date of the object.
+    google.protobuf.Timestamp created_date = 3;  // The creation date of the object.
+    bytes content = 4;  // The binary content of the downloaded object.
+}
+
+// Metadata for tracking the object.
 message Metadata {
     string key = 1;
     google.protobuf.Timestamp created_at = 2;
     google.protobuf.Timestamp expired_date = 3;
 }
+

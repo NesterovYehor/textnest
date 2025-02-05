@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
@@ -11,11 +12,11 @@ import (
 )
 
 type MetadataManagementService struct {
-	repo repository.MetadataRepository
+	repo *repository.MetadataRepository
 	log  *jsonlog.Logger
 }
 
-func NewMetadataManagementService(repo repository.MetadataRepository, log *jsonlog.Logger) *MetadataManagementService {
+func NewMetadataManagementService(repo *repository.MetadataRepository, log *jsonlog.Logger) *MetadataManagementService {
 	return &MetadataManagementService{repo: repo, log: log}
 }
 
@@ -26,7 +27,7 @@ func (ms *MetadataManagementService) ValidateAndSave(ctx context.Context, metada
 		return err
 	}
 
-	if err := ms.repo.UploadPasteMetadata(ctx, metadata); err != nil {
+	if err := ms.repo.InsertPasteMetadata(ctx, metadata); err != nil {
 		err = fmt.Errorf("failed to save metadata: %w", err)
 		ms.log.PrintError(ctx, err, map[string]string{"key": metadata.Key})
 		return err
@@ -34,4 +35,20 @@ func (ms *MetadataManagementService) ValidateAndSave(ctx context.Context, metada
 
 	ms.log.PrintInfo(ctx, "Metadata saved successfully", map[string]string{"key": metadata.Key})
 	return nil
+}
+
+func (ms *MetadataManagementService) GetPasteOwner(ctx context.Context, key string) (string, error) {
+	return ms.repo.GetPasteOwner(ctx, key)
+}
+
+func (ms *MetadataManagementService) UpdateMetadata(ctx context.Context, key string, expirationDate time.Time) error {
+	return ms.repo.UpdatePasteMetadata(ctx, expirationDate, key)
+}
+
+func (ms *MetadataManagementService) ExpireMetadata(ctx context.Context, key string) error {
+	return ms.repo.UpdatePasteMetadata(ctx, time.Now(), key)
+}
+
+func (ms *MetadataManagementService) ExpireAllPastes(ctx context.Context, userID string) error {
+	return ms.repo.ExpireAllPastesByUserId(ctx, userID)
 }

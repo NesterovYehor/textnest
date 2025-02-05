@@ -11,13 +11,13 @@ import (
 )
 
 type FetchContentService struct {
-	repo       repository.StorageRepository
+	repo       *repository.ContentRepo
 	cache      cache.Cache
 	logger     *jsonlog.Logger
 	bucketName string // Optional if bucketName is constant for the service
 }
 
-func newFetchContentService(repo repository.StorageRepository, cache cache.Cache, log *jsonlog.Logger, bucketName string) (*FetchContentService, error) {
+func newFetchContentService(repo *repository.ContentRepo, cache cache.Cache, log *jsonlog.Logger, bucketName string) (*FetchContentService, error) {
 	return &FetchContentService{
 		repo:       repo,
 		cache:      cache,

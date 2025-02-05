@@ -49,8 +49,9 @@ func TestValidateUser(t *testing.T) {
 		Name:  "Valid User",
 		Email: validEmail,
 	}
-	user.Password.Set(validPassword)
-	err := validation.ValidateUser(user)
+	err := user.Password.Set(validPassword)
+	assert.NoError(t, err)
+	err = validation.ValidateUser(user)
 	assert.NoError(t, err, "Valid user should not return an error")
 
 	// User with no name

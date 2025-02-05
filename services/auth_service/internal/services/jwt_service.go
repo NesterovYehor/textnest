@@ -19,7 +19,7 @@ func NewJwtService(jwtCfg *config.JwtConfig) *JwtService {
 	}
 }
 
-func (srv *JwtService) ExtractUserID(token string, expectedType string) (*int64, error) {
+func (srv *JwtService) ExtractUserID(token string, expectedType string) (string, error) {
 	secret := ""
 	if expectedType == "access" {
 		secret = srv.JwtConfig.AccessSecret
@@ -29,35 +29,35 @@ func (srv *JwtService) ExtractUserID(token string, expectedType string) (*int64,
 	// Validate the token
 	parsedToken, err := validation.ValidateJwtToken(token, secret, expectedType)
 	if err != nil {
-		return nil, fmt.Errorf("invalid token: %v", err)
+		return "", fmt.Errorf("invalid token: %v", err)
 	}
 
 	// Extract claims from the token
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("unable to parse token claims")
+		return "", fmt.Errorf("unable to parse token claims")
 	}
 
 	// Extract user ID from claims
-	userID, ok := claims["user_id"].(int64)
+	userID, ok := claims["user_id"].(string)
 	if !ok {
-		return nil, fmt.Errorf("user_id not found or invalid in token claims")
+		return "", fmt.Errorf("user_id not found or invalid in token claims")
 	}
 
 	// Return user ID
-	return &userID, nil
+	return userID, nil
 }
 
-func (srv *JwtService) GenerateAccessTocken(userId int64) (string, error) {
+func (srv *JwtService) GenerateAccessTocken(userId string) (string, error) {
 	return srv.generateToken(userId, "access", srv.JwtConfig.AccessExpiry, []byte(srv.JwtConfig.AccessSecret))
 }
 
-func (srv *JwtService) GenerateRefreshTocken(userId int64) (string, error) {
+func (srv *JwtService) GenerateRefreshTocken(userId string) (string, error) {
 	return srv.generateToken(userId, "refresh", srv.JwtConfig.RefreshExpiry, []byte(srv.JwtConfig.RefreshSecret))
 }
 
 func (srv *JwtService) generateToken(
-	userId int64,
+	userId string,
 	tokenType string, // "access" or "refresh"
 	expiry time.Duration, // e.g., 15m or 7d
 	secret []byte, // secret key for signing
@@ -65,7 +65,7 @@ func (srv *JwtService) generateToken(
 	claims := jwt.MapClaims{
 		"user_id": userId,
 		"type":    tokenType,
-		"exp":     time.Now().Add(expiry),
+		"exp":     time.Now().Add(expiry).Unix(),
 	}
 	token := jwt.NewWithClaims(srv.JwtConfig.SigningMethod, claims)
 	return token.SignedString(secret) // Sign with the correct secret

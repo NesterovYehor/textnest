@@ -59,7 +59,7 @@ func (ctr *AuthControler) AuthorizeUser(ctx context.Context, req *auth.Authorize
 		return nil, err
 	}
 
-	exist, err := ctr.userSrv.UserExists(*userId)
+	exist, err := ctr.userSrv.UserExists(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +67,6 @@ func (ctr *AuthControler) AuthorizeUser(ctx context.Context, req *auth.Authorize
 		return nil, errors.New("User with this user id does not exist")
 	}
 	return &auth.AuthorizeUserResponse{
-		UserId: *userId,
+		UserId: userId,
 	}, nil
 }

@@ -58,7 +58,7 @@ func (c *AuthClient) LogIn(email, password string) (*auth.AuthenticateUserRespon
 	return res, nil
 }
 
-func (c *AuthClient) AuthorizeUser(token string) (int64, error) {
+func (c *AuthClient) AuthorizeUser(token string) (string, error) {
 	req := auth.AuthorizeUserRequest{
 		Tocken: token,
 	}
@@ -68,7 +68,7 @@ func (c *AuthClient) AuthorizeUser(token string) (int64, error) {
 
 	res, err := c.client.AuthorizeUser(ctx, &req)
 	if err != nil {
-		return res.UserId, err
+		return "", err
 	}
 
 	return res.UserId, nil

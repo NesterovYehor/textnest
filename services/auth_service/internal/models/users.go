@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,7 +17,7 @@ var (
 
 // User represents a user in the system.
 type User struct {
-	ID        int64     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
@@ -68,7 +69,7 @@ func (model *UserModel) Insert(user *User) error {
 	return nil
 }
 
-func (model *UserModel) UserExists(userId int64) (bool, error) {
+func (model *UserModel) UserExists(userId string) (bool, error) {
 	var exist bool
 	query := `
     SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)
@@ -76,7 +77,11 @@ func (model *UserModel) UserExists(userId int64) (bool, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	err := model.db.QueryRowContext(ctx, query, userId).Scan(&exist)
+	args, err := uuid.Parse(userId)
+	if err != nil {
+		return false, err
+	}
+	err = model.db.QueryRowContext(ctx, query, args).Scan(&exist)
 	if err != nil {
 		return false, err
 	}

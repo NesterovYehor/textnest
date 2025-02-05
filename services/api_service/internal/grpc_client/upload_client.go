@@ -29,13 +29,53 @@ func (c *UploadClient) Close() error {
 }
 
 // Upload method calls the gRPC Upload RPC
-func (c *UploadClient) Upload(key string, userId string, expirationDate time.Time, data []byte) (string, error) {
-	resp, err := c.client.Upload(context.Background(), &paste_upload.UploadRequest{
+func (c *UploadClient) UploadPaste(ctx context.Context, key string, userId string, expirationDate time.Time, data []byte) (string, error) {
+	resp, err := c.client.UploadPaste(ctx, &paste_upload.UploadPasteRequest{
 		Key:            key,
 		UserId:         userId,
 		ExpirationDate: timestamppb.New(expirationDate),
 		Data:           data,
 	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Message, nil
+}
+
+// Upload method calls the gRPC Upload RPC
+func (c *UploadClient) ExpireAllUserPastes(ctx context.Context, userId string) (string, error) {
+	resp, err := c.client.ExpireAllPastesByUserID(ctx, &paste_upload.ExpireAllPastesByUserIDRequest{
+		UserId: userId,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Message, nil
+}
+
+// Upload method calls the gRPC Upload RPC
+func (c *UploadClient) ExpirePaste(ctx context.Context, key string, userId string) (string, error) {
+	resp, err := c.client.ExpirePaste(ctx, &paste_upload.ExpirePasteRequest{
+		Key:    key,
+		UserId: userId,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Message, nil
+}
+
+func (c *UploadClient) UpdatePaste(ctx context.Context, key string, userId string, expirationDate *time.Time, data *[]byte) (string, error) {
+	// Prepare the request
+	req := &paste_upload.UploadUpdatesRequest{
+		Key:            key,
+		UserId:         userId,
+		ExpirationDate: timestamppb.New(*expirationDate),
+		Content:        *data,
+	}
+
+	// Send gRPC request
+	resp, err := c.client.UploadUpdates(ctx, req)
 	if err != nil {
 		return "", err
 	}

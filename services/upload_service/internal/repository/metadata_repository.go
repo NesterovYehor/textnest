@@ -7,36 +7,40 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
+	"github.com/google/uuid"
 	"github.com/sony/gobreaker"
 
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
 )
 
-type metadataRepository struct {
+type MetadataRepository struct {
 	DB      *sql.DB
 	breaker *middleware.CircuitBreakerMiddleware
 }
 
 // NewMetadataRepository creates a new metadata repository with circuit breaker middleware.
-func NewMetadataRepository(db *sql.DB) MetadataRepository {
+func NewMetadataRepository(db *sql.DB) *MetadataRepository {
 	cbSettings := gobreaker.Settings{
 		Name:        "MetadataRepo",
-		MaxRequests: 5,
+		MaxRequests: 3,
 		Interval:    10 * time.Second,
 		Timeout:     30 * time.Second,
+        ReadyToTrip: func(counts gobreaker.Counts) bool {
+        return counts.ConsecutiveFailures > 5
+    },
 	}
-	return &metadataRepository{
+	return &MetadataRepository{
 		DB:      db,
 		breaker: middleware.NewCircuitBreakerMiddleware(cbSettings),
 	}
 }
 
 // UploadPasteMetadata inserts metadata into the database with circuit breaker protection.
-func (repo *metadataRepository) UploadPasteMetadata(ctx context.Context, data *models.MetaData) error {
+func (repo *MetadataRepository) InsertPasteMetadata(ctx context.Context, data *models.MetaData) error {
 	operation := func(ctx context.Context) (any, error) {
 		query := `
-        INSERT INTO metadata(key, userId, created_at, expiration_date) 
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO metadata(key, user_id, created_at, expiration_date) 
+        VALUES ($1, NULLIF($2, ''), $3, $4)
         `
 
 		args := []any{
@@ -58,4 +62,59 @@ func (repo *metadataRepository) UploadPasteMetadata(ctx context.Context, data *m
 		return err
 	}
 	return nil
+}
+
+func (repo *MetadataRepository) UpdatePasteMetadata(ctx context.Context, expirationDate time.Time, key string) error {
+	operation := func(ctx context.Context) (any, error) {
+		// Try to update the metadata
+		query := `
+        UPDATE metadata 
+        SET expiration_date = $1
+        WHERE key = $2
+        `
+		args := []any{
+			expirationDate,
+			key,
+		}
+		_, err := repo.DB.ExecContext(ctx, query, args...)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+
+	// Execute the operation with the circuit breaker
+	_, err := repo.breaker.Execute(ctx, operation)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *MetadataRepository) ExpireAllPastesByUserId(ctx context.Context, userId string) error {
+	operation := func(ctx context.Context) (any, error) {
+		query := `UPDATE metadata SET expiration_date = NOW() WHERE user_id = $1`
+		_, err := repo.DB.ExecContext(ctx, query, userId)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+	_, err := repo.breaker.Execute(ctx, operation)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *MetadataRepository) GetPasteOwner(ctx context.Context, key string) (string, error) {
+	query := `SELECT user_id FROM metadata WHERE key = $1)`
+
+	var userId uuid.UUID
+	err := repo.DB.QueryRowContext(ctx, query, key).Scan(&userId)
+	if err != nil {
+		return "", err
+	}
+	return userId.String(), nil
 }

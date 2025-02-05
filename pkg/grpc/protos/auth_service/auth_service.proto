@@ -12,7 +12,7 @@ import "google/protobuf/timestamp.proto";
 
 // Used for internal storage (not exposed directly in responses)
 message User {
-    int64 id = 1;
+    string id = 1;
     google.protobuf.Timestamp created_at = 2;
     string name = 3;
     string email = 4;
@@ -30,9 +30,7 @@ message CreateUserRequest {
     string password = 3;
 }
 
-message CreateUserResponse {
-    int64 user_id = 1;  // Return the created user ID
-}
+message CreateUserResponse {}
 
 // --------------------------
 // AuthenticateUser
@@ -57,7 +55,7 @@ message AuthorizeUserRequest {
 }
 
 message AuthorizeUserResponse {
-    int64 user_id = 1;
+    string user_id = 1;
 }
 // --------------------------
 // Service

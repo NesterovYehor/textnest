@@ -8,9 +8,9 @@ import (
 )
 
 type Metadata struct {
-	Key         string
-	CreatedAt   time.Time
-	ExpiredDate time.Time
+	Key            string
+	CreatedAt      time.Time
+	ExpirationDate time.Time // Renamed from ExpiredDate
 }
 
 // Convert models.Metadata to Protobuf Metadata
@@ -18,7 +18,7 @@ func (m *Metadata) ToProto() *pb.Metadata {
 	return &pb.Metadata{
 		Key:         m.Key,
 		CreatedAt:   timestamppb.New(m.CreatedAt),
-		ExpiredDate: timestamppb.New(m.ExpiredDate),
+		ExpiredDate: timestamppb.New(m.ExpirationDate),
 	}
 }
 
@@ -27,6 +27,6 @@ func FromProto(proto *pb.Metadata) *Metadata {
 	return &Metadata{
 		Key:         proto.Key,
 		CreatedAt:   proto.CreatedAt.AsTime(),
-		ExpiredDate: proto.ExpiredDate.AsTime(),
+		ExpirationDate: proto.ExpiredDate.AsTime(),
 	}
 }

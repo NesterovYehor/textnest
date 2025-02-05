@@ -2,15 +2,11 @@ package coordinators
 
 import (
 	"context"
-	"fmt"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/services"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/validation"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DownloadCoordinator struct {
@@ -18,7 +14,7 @@ type DownloadCoordinator struct {
 	fetchContentService  *services.FetchContentService
 	cfg                  *config.Config
 	logger               *jsonlog.Logger
-	pb.UnimplementedPasteDownloadServer
+	pb.UnsafePasteDownloadServer
 }
 
 func NewDownloadCoordinator(ctx context.Context, cfg *config.Config, log *jsonlog.Logger) (*DownloadCoordinator, error) {
@@ -40,13 +36,9 @@ func NewDownloadCoordinator(ctx context.Context, cfg *config.Config, log *jsonlo
 	}, nil
 }
 
-func (coord *DownloadCoordinator) Download(ctx context.Context, req *pb.DownloadRequest) (*pb.DownloadResponse, error) {
-	if v := validation.ValidateKey(req.Key); !v.Valid() {
-		return nil, fmt.Errorf("invalid key")
-	}
-
+func (coord *DownloadCoordinator) DownloadByKey(ctx context.Context, req *pb.DownloadByKeyRequest) (*pb.DownloadByKeyResponse, error) {
 	// Fetch metadata
-	metadata, err := coord.fetchMetadataService.GetMetadata(ctx, req.Key)
+	metadata, err := coord.fetchMetadataService.FetchMetadataByKey(ctx, req.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -58,14 +50,20 @@ func (coord *DownloadCoordinator) Download(ctx context.Context, req *pb.Download
 	}
 
 	// Build and return the response
-	return coord.createDownloadResponse(req.Key, models.FromProto(metadata), content), nil
+	return &pb.DownloadByKeyResponse{
+		Key:            req.Key,
+		ExpirationDate: metadata.ExpiredDate,
+		CreatedDate:    metadata.CreatedAt,
+		Content:        content,
+	}, nil
 }
 
-func (coord *DownloadCoordinator) createDownloadResponse(key string, metadata *models.Metadata, content []byte) *pb.DownloadResponse {
-	return &pb.DownloadResponse{
-		Key:            key,
-		ExpirationDate: timestamppb.New(metadata.ExpiredDate),
-		CreatedDate:    timestamppb.New(metadata.CreatedAt),
-		Content:        content,
+func (coord *DownloadCoordinator) DownloadByUserId(ctx context.Context, req *pb.DownloadByUserIdRequest) (*pb.DownloadByUserIdResponse, error) {
+	metadata, err := coord.fetchMetadataService.FetchMetadataByUserId(ctx, req.UserId, int(req.Limit), int(req.Offset))
+	if err != nil {
+		return nil, err
 	}
+	return &pb.DownloadByUserIdResponse{
+		Objects: metadata,
+	}, nil
 }

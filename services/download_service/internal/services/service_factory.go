@@ -28,8 +28,8 @@ func (f *ServiceFactory) CreateFetchMetadataService(ctx context.Context) (*Fetch
 		return nil, err
 	}
 	if err := db.PingContext(ctx); err != nil {
-        f.log.PrintError(ctx, fmt.Errorf("failed to ping database: %w", err), nil)
-		return nil, err 
+		f.log.PrintError(ctx, fmt.Errorf("failed to ping database: %w", err), nil)
+		return nil, err
 	}
 	metadataRepo := repository.NewMetadataRepo(db)
 	kafkaProducer, err := kafka.NewProducer(f.cfg.Kafka, ctx)
@@ -42,7 +42,7 @@ func (f *ServiceFactory) CreateFetchMetadataService(ctx context.Context) (*Fetch
 }
 
 func (f *ServiceFactory) CreateFetchContentService(ctx context.Context) (*FetchContentService, error) {
-	storageRepo, err := repository.NewStorageRepository(f.cfg.BucketName)
+	storageRepo, err := repository.NewContentRepository(f.cfg.BucketName)
 	if err != nil {
 		return nil, err
 	}

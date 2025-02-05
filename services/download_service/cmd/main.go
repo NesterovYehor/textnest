@@ -35,14 +35,14 @@ func main() {
 		log.PrintError(ctx, err, nil)
 	}
 
-    _, err = initializeDatabase(cfg.DBURL, log, ctx)
-    if err != nil {
-        log.PrintError(ctx, err, nil)
-    }
+	_, err = initializeDatabase(cfg.DBURL, log, ctx)
+	if err != nil {
+		log.PrintError(ctx, err, nil)
+	}
 
 	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
- 
+
 	coord, err := coordinators.NewDownloadCoordinator(ctx, cfg, log)
 	if err != nil {
 		log.PrintError(ctx, err, nil)

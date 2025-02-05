@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PasteDownload_Download_FullMethodName = "/pastedownload.PasteDownload/Download"
+	PasteDownload_DownloadByKey_FullMethodName    = "/pastedownload.PasteDownload/DownloadByKey"
+	PasteDownload_DownloadByUserId_FullMethodName = "/pastedownload.PasteDownload/DownloadByUserId"
 )
 
 // PasteDownloadClient is the client API for PasteDownload service.
@@ -29,7 +30,9 @@ const (
 // DownloadService provides methods for downloading objects.
 type PasteDownloadClient interface {
 	// Download retrieves an object by its key.
-	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error)
+	DownloadByKey(ctx context.Context, in *DownloadByKeyRequest, opts ...grpc.CallOption) (*DownloadByKeyResponse, error)
+	// DownloadByUserId retrieves a slice of objects based on userId, with pagination.
+	DownloadByUserId(ctx context.Context, in *DownloadByUserIdRequest, opts ...grpc.CallOption) (*DownloadByUserIdResponse, error)
 }
 
 type pasteDownloadClient struct {
@@ -40,10 +43,20 @@ func NewPasteDownloadClient(cc grpc.ClientConnInterface) PasteDownloadClient {
 	return &pasteDownloadClient{cc}
 }
 
-func (c *pasteDownloadClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*DownloadResponse, error) {
+func (c *pasteDownloadClient) DownloadByKey(ctx context.Context, in *DownloadByKeyRequest, opts ...grpc.CallOption) (*DownloadByKeyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DownloadResponse)
-	err := c.cc.Invoke(ctx, PasteDownload_Download_FullMethodName, in, out, cOpts...)
+	out := new(DownloadByKeyResponse)
+	err := c.cc.Invoke(ctx, PasteDownload_DownloadByKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pasteDownloadClient) DownloadByUserId(ctx context.Context, in *DownloadByUserIdRequest, opts ...grpc.CallOption) (*DownloadByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DownloadByUserIdResponse)
+	err := c.cc.Invoke(ctx, PasteDownload_DownloadByUserId_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +70,9 @@ func (c *pasteDownloadClient) Download(ctx context.Context, in *DownloadRequest,
 // DownloadService provides methods for downloading objects.
 type PasteDownloadServer interface {
 	// Download retrieves an object by its key.
-	Download(context.Context, *DownloadRequest) (*DownloadResponse, error)
+	DownloadByKey(context.Context, *DownloadByKeyRequest) (*DownloadByKeyResponse, error)
+	// DownloadByUserId retrieves a slice of objects based on userId, with pagination.
+	DownloadByUserId(context.Context, *DownloadByUserIdRequest) (*DownloadByUserIdResponse, error)
 	mustEmbedUnimplementedPasteDownloadServer()
 }
 
@@ -68,8 +83,11 @@ type PasteDownloadServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPasteDownloadServer struct{}
 
-func (UnimplementedPasteDownloadServer) Download(context.Context, *DownloadRequest) (*DownloadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Download not implemented")
+func (UnimplementedPasteDownloadServer) DownloadByKey(context.Context, *DownloadByKeyRequest) (*DownloadByKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadByKey not implemented")
+}
+func (UnimplementedPasteDownloadServer) DownloadByUserId(context.Context, *DownloadByUserIdRequest) (*DownloadByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadByUserId not implemented")
 }
 func (UnimplementedPasteDownloadServer) mustEmbedUnimplementedPasteDownloadServer() {}
 func (UnimplementedPasteDownloadServer) testEmbeddedByValue()                       {}
@@ -92,20 +110,38 @@ func RegisterPasteDownloadServer(s grpc.ServiceRegistrar, srv PasteDownloadServe
 	s.RegisterService(&PasteDownload_ServiceDesc, srv)
 }
 
-func _PasteDownload_Download_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DownloadRequest)
+func _PasteDownload_DownloadByKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadByKeyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PasteDownloadServer).Download(ctx, in)
+		return srv.(PasteDownloadServer).DownloadByKey(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PasteDownload_Download_FullMethodName,
+		FullMethod: PasteDownload_DownloadByKey_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PasteDownloadServer).Download(ctx, req.(*DownloadRequest))
+		return srv.(PasteDownloadServer).DownloadByKey(ctx, req.(*DownloadByKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PasteDownload_DownloadByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PasteDownloadServer).DownloadByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PasteDownload_DownloadByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PasteDownloadServer).DownloadByUserId(ctx, req.(*DownloadByUserIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -118,8 +154,12 @@ var PasteDownload_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PasteDownloadServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Download",
-			Handler:    _PasteDownload_Download_Handler,
+			MethodName: "DownloadByKey",
+			Handler:    _PasteDownload_DownloadByKey_Handler,
+		},
+		{
+			MethodName: "DownloadByUserId",
+			Handler:    _PasteDownload_DownloadByUserId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

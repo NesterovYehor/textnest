@@ -36,14 +36,14 @@ func TestS3Repository_Integration(t *testing.T) {
 	s3Client := s3.New(sess)
 
 	// Initialize repository
-	repo, err := repository.NewS3Repository()
+	repo, err := repository.NewContentRepository(bucketName)
 
 	// Test data
 	key := "test_key"
 	data := []byte("test_content")
 
 	// Call UploadPasteContent
-	err = repo.UploadPasteContent(context.Background(), bucketName, key, data)
+	err = repo.UploadPasteContent(context.Background(), key, data)
 	assert.NoError(t, err)
 
 	// Verify content in S3

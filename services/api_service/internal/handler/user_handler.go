@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/NesterovYehor/TextNest/pkg/errors"
@@ -50,6 +51,7 @@ func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 
 		ress, err := app.AuthClient.LogIn(input.Emain, input.Password)
 		if err != nil {
+			app.Logger.PrintInfo(ctx, fmt.Sprintf("response of Autherization: %v", ress), nil)
 			app.Logger.PrintError(ctx, err, nil)
 			errors.BadRequestResponse(w, http.StatusBadRequest, err)
 		}

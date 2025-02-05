@@ -43,21 +43,21 @@ func (srv *UserService) CreateNewUser(name, email, password string) error {
 	return nil
 }
 
-func (srv *UserService) GetUserByEmail(email, passwordPlaintext string) (int64, error) {
+func (srv *UserService) GetUserByEmail(email, passwordPlaintext string) (string, error) {
 	user, err := srv.model.GetByEmail(email)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	matches, err := user.Password.Match(passwordPlaintext)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	if !matches {
-		return 0, errors.New("password is incorrect")
+		return "", errors.New("password is incorrect")
 	}
-	return user.ID, nil
+	return user.ID.String(), nil
 }
 
-func (srv *UserService) UserExists(userId int64) (bool, error) {
+func (srv *UserService) UserExists(userId string) (bool, error) {
 	return srv.model.UserExists(userId)
 }

@@ -45,8 +45,8 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(cfg, appContext, ctx))))
-	mux.HandleFunc("/v1/download", downloadPasteHandler(cfg, appContext, logger))
+	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(cfg, appContext))))
+	mux.Handle("/v1/download", midlewares.Authenticate(handler.DownloadHandler(cfg, appContext)))
 	mux.HandleFunc("/v1/signup", handler.SignUpHandler(appContext, ctx))
 	mux.HandleFunc("/v1/login", handler.LogInHandler(appContext, ctx))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -76,13 +76,6 @@ func main() {
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.PrintError(ctx, fmt.Errorf("error during shutdown: %w", err), nil)
-	}
-}
-
-func downloadPasteHandler(cfg *config.Config, appContext *app.AppContext, logger *jsonlog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		logger.PrintInfo(r.Context(), "Request received", nil)
-		handler.DownloadPaste(w, r, cfg, r.Context(), appContext)
 	}
 }
 

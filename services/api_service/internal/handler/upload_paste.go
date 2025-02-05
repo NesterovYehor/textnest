@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -12,8 +11,10 @@ import (
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/validation"
 )
 
-func UploadPasteHandler(cfg *config.Config, app *app.AppContext, ctx context.Context) http.HandlerFunc {
+func UploadPasteHandler(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var input validation.PasteInput
 		if err := helpers.ReadJSON(w, r, &input); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("failed to read JSON input: %w", err), nil)
@@ -21,36 +22,37 @@ func UploadPasteHandler(cfg *config.Config, app *app.AppContext, ctx context.Con
 			return
 		}
 
-		// Validate input
 		if err := validation.ValidatePasteInput(&input); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("validation error: %w", err), nil)
 			errors.BadRequestResponse(w, http.StatusBadRequest, err)
 			return
 		}
 
-		// Generate a new unique key
 		key, err := app.KeyGenClient.GetKey(ctx)
 		if err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error generating new key: %w", err), nil)
 			errors.ServerErrorResponse(w, fmt.Errorf("internal error while generating key"))
 			return
 		}
-		userId := ctx.Value("user_id").(int64)
 
-		// Upload the paste
-		uploadRes, err := app.UploadClient.Upload(key, userId, input.ExpirationDate, []byte(input.Content))
+		userID, ok := ctx.Value("user_id").(string)
+		if !ok {
+			userID = ""
+		}
+
+		uploadRes, err := app.UploadClient.UploadPaste(ctx, key, userID, input.ExpirationDate, []byte(input.Content))
 		if err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error uploading paste: %w", err), nil)
 			errors.ServerErrorResponse(w, fmt.Errorf("internal error while uploading paste"))
 			return
 		}
+
 		if uploadRes == "" {
 			app.Logger.PrintError(ctx, fmt.Errorf("empty response from upload service"), nil)
 			errors.ServerErrorResponse(w, fmt.Errorf("internal error: empty response from upload service"))
 			return
 		}
 
-		// Send success response
 		response := helpers.Envelope{"message": uploadRes, "key": key}
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
@@ -58,3 +60,5 @@ func UploadPasteHandler(cfg *config.Config, app *app.AppContext, ctx context.Con
 		}
 	}
 }
+
+func Update ff

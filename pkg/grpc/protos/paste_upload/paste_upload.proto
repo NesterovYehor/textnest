@@ -4,24 +4,59 @@ package pasteupload;
 
 option go_package = "./;paste_upload";
 
-import "google/protobuf/timestamp.proto"; // Import the timestamp type
+import "google/protobuf/timestamp.proto";
 
 // Upload RPC definition
 service PasteUpload {
-    rpc Upload (UploadRequest) returns (UploadResponse);
+    rpc UploadPaste (UploadPasteRequest) returns (UploadPasteResponse);
+    rpc UploadUpdates (UploadUpdatesRequest) returns (UploadUpdatesResponse);
+    rpc ExpirePaste (ExpirePasteRequest) returns (ExpirePasteResponse);
+    rpc ExpireAllPastesByUserID (ExpireAllPastesByUserIDRequest) returns (ExpireAllPastesByUserIDResponse);
 }
 
 // Upload request message
-message UploadRequest {
+message UploadPasteRequest {
     string key = 1;                                // Unique paste key
-    int64 userId = 2;                             // User id 
+    string user_id = 2;                            // User ID (consistent type)
     google.protobuf.Timestamp expiration_date = 3; // Expiration date
     bytes data = 4;                                // Paste content as bytes
 }
 
 // Upload response message
-message UploadResponse {
+message UploadPasteResponse {
     string message = 1;                            // Response message (e.g., "Upload successful")
-    google.protobuf.Timestamp expiration_date = 3; // Echo back the expiration date for confirmation
+    google.protobuf.Timestamp expiration_date = 2; // Echo back the expiration date for confirmation
+}
+
+// Update request message
+message UploadUpdatesRequest {
+    string key = 1;
+    string user_id = 2;  // Consistent user ID type
+    optional google.protobuf.Timestamp expiration_date = 3;  // Optional field for expiration update
+    optional bytes content = 4;  // Optional field for content update
+}
+
+// Update response message
+message UploadUpdatesResponse {
+    string message = 1;  // Response message (e.g., "Update successful" or error details)
+}
+
+// Expire a single paste by user ID
+message ExpirePasteRequest {
+    string key = 1;
+    string user_id = 2;
+}
+
+message ExpirePasteResponse {
+    string message = 1;  // Response message (e.g., "Paste expired successfully" or error details)
+}
+
+// Expire all pastes for a user
+message ExpireAllPastesByUserIDRequest {
+    string user_id = 1;  // Corrected field number
+}
+
+message ExpireAllPastesByUserIDResponse {
+    string message = 1;  // Response message (e.g., "All pastes expired successfully" or error details)
 }
 
