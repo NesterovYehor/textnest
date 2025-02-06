@@ -89,7 +89,7 @@ func initializeDatabase(dsn string, log *jsonlog.Logger, ctx context.Context) (*
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	log.PrintInfo(ctx, "Connected to the database", nil)
 	return db, nil

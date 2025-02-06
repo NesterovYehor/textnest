@@ -14,7 +14,7 @@ import (
 	"github.com/NesterovYehor/TextNest/services/api_service/config"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/handler"
-	"github.com/NesterovYehor/TextNest/services/api_service/internal/midlewares"
+	"github.com/NesterovYehor/TextNest/services/api_service/internal/middlewares"
 )
 
 func main() {
@@ -45,8 +45,10 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(cfg, appContext))))
+	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(appContext))))
 	mux.Handle("/v1/download", midlewares.Authenticate(handler.DownloadHandler(cfg, appContext)))
+	mux.Handle("/v1/expire/{key}", midlewares.Authenticate(handler.ExpirePasteHandler(appContext)))
+	mux.Handle("/v1/expire/all", midlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
 	mux.HandleFunc("/v1/signup", handler.SignUpHandler(appContext, ctx))
 	mux.HandleFunc("/v1/login", handler.LogInHandler(appContext, ctx))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +57,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:         cfg.HttpAddr,
-		Handler:      mux,
+		Handler:      middlewares.RateLimit(cfg, mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,

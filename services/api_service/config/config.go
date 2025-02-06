@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	"github.com/NesterovYehor/TextNest/pkg/logger"
@@ -18,10 +19,11 @@ type Config struct {
 	KeyService      *grpc.GrpcConfig `yaml:"key_service"`
 	HttpAddr        string           `yaml:"addr"`
 	Limiter         struct {
-		Rps     float64
-		Burst   int
-		Enabled bool
-	}
+		Rps             float64       `yaml:"rpc"`
+		Burst           int           `yaml:"burst"`
+		Enabled         bool          `yaml:"enabled"`
+		CleanupInterval time.Duration `yaml:"cleanup_interval"`
+	} `yaml:"limiter"`
 }
 
 // LoadConfig loads the gRPC service configuration from a YAML file.
