@@ -6,21 +6,20 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/sony/gobreaker"
 )
 
 type ContentRepo struct {
-	S3     *s3.Client
+	S3     *s3.PresignClient
 	beaker *middleware.CircuitBreakerMiddleware
+	bucket string
 }
 
-func NewContentRepository(bucket string) (*ContentRepo, error) {
+func NewContentRepository(bucket, region string) (*ContentRepo, error) {
 	// Load AWS configuration with specified region
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
@@ -31,54 +30,23 @@ func NewContentRepository(bucket string) (*ContentRepo, error) {
 		Timeout:     30 * time.Second, // Time to reset the circuit after tripping
 	}
 
-	// Initialize the S3 client
-	s3Client := s3.NewFromConfig(cfg)
+	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
 
 	return &ContentRepo{
-		S3:     s3Client,
+		S3:     presignClient,
 		beaker: middleware.NewCircuitBreakerMiddleware(cbSettings),
+		bucket: bucket,
 	}, nil
 }
 
-func (repo *ContentRepo) DownloadPasteContent(bucket, key string) ([]byte, error) {
-	operation := func(ctx context.Context) (any, error) {
-		// Create the downloader with the S3 client
-		downloader := manager.NewDownloader(repo.S3)
-
-		// Set a timeout for the context
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
-
-		// Use manager.WriteAtBuffer to store the downloaded content
-		buf := manager.NewWriteAtBuffer([]byte{})
-
-		// Create the GetObjectInput with the S3 key and bucket name
-		input := &s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-		}
-
-		// Perform the download operation and capture the result into the buffer
-		_, err := downloader.Download(ctx, buf, input)
-		if err != nil {
-			return nil, fmt.Errorf("failed to download object from S3: %v", err)
-		}
-
-		// Return the content as a byte slice
-		return buf.Bytes(), nil
-	}
-
-	// Use the Circuit Breaker middleware to execute the operation
-	result, err := repo.beaker.Execute(context.Background(), operation)
+func (repo *ContentRepo) GenerateDownloadURL(key string, ctx context.Context) (string, error) {
+	req, err := repo.S3.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: &repo.bucket,
+		Key:    &key,
+	}, s3.WithPresignExpires(time.Minute*10))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	// Ensure the result is cast correctly to a byte slice
-	content, ok := result.([]byte)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type from Circuit Breaker execution")
-	}
-
-	return content, nil
+	return req.URL, nil
 }
+

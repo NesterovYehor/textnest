@@ -10,7 +10,6 @@ import "google/protobuf/timestamp.proto";
 service PasteUpload {
     rpc UploadPaste (UploadPasteRequest) returns (UploadPasteResponse);
     rpc UploadUpdates (UploadUpdatesRequest) returns (UploadUpdatesResponse);
-    rpc ExpirePaste (ExpirePasteRequest) returns (ExpirePasteResponse);
     rpc ExpireAllPastesByUserID (ExpireAllPastesByUserIDRequest) returns (ExpireAllPastesByUserIDResponse);
 }
 
@@ -18,13 +17,13 @@ service PasteUpload {
 message UploadPasteRequest {
     string key = 1;                                // Unique paste key
     string user_id = 2;                            // User ID (consistent type)
-    google.protobuf.Timestamp expiration_date = 3; // Expiration date
-    bytes data = 4;                                // Paste content as bytes
+    string title = 3;
+    google.protobuf.Timestamp expiration_date = 4; // Expiration date
 }
 
 // Upload response message
 message UploadPasteResponse {
-    string message = 1;                            // Response message (e.g., "Upload successful")
+    string  upload_url = 1;                            // Response message (e.g., "Upload successful")
     google.protobuf.Timestamp expiration_date = 2; // Echo back the expiration date for confirmation
 }
 
@@ -32,24 +31,13 @@ message UploadPasteResponse {
 message UploadUpdatesRequest {
     string key = 1;
     string user_id = 2;  // Consistent user ID type
-    optional google.protobuf.Timestamp expiration_date = 3;  // Optional field for expiration update
-    optional bytes content = 4;  // Optional field for content update
 }
 
 // Update response message
 message UploadUpdatesResponse {
-    string message = 1;  // Response message (e.g., "Update successful" or error details)
+    string upload_url = 1;  // Response message (e.g., "Update successful" or error details)
 }
 
-// Expire a single paste by user ID
-message ExpirePasteRequest {
-    string key = 1;
-    string user_id = 2;
-}
-
-message ExpirePasteResponse {
-    string message = 1;  // Response message (e.g., "Paste expired successfully" or error details)
-}
 
 // Expire all pastes for a user
 message ExpireAllPastesByUserIDRequest {

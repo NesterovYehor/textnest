@@ -43,7 +43,8 @@ message AuthenticateUserRequest {
 message AuthenticateUserResponse {
     string access_token = 1;   // snake_case convention
     string refresh_token = 2;
-    int64 expires_in = 3;      // Optional: token TTL in seconds
+    google.protobuf.Timestamp expires_in = 3;      // Optional: token TTL in seconds
+    google.protobuf.Timestamp refresh_expires_at = 4;      // Optional: token TTL in seconds
 }
 
 
@@ -57,6 +58,24 @@ message AuthorizeUserRequest {
 message AuthorizeUserResponse {
     string user_id = 1;
 }
+
+
+
+// --------------------------
+// Refresh Tokens
+// --------------------------
+message RefreshTokensRequest {
+    string tocken = 1;
+}
+
+message RefreshTokensResponse {
+    string access_token = 1;   // snake_case convention
+    string refresh_token = 2;
+    google.protobuf.Timestamp expires_in = 3;      // Optional: token TTL in seconds
+    google.protobuf.Timestamp refresh_expires_at = 4;      // Optional: token TTL in seconds
+}
+
+
 // --------------------------
 // Service
 // --------------------------
@@ -64,4 +83,5 @@ service AuthService {
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
     rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
     rpc AuthorizeUser(AuthorizeUserRequest) returns (AuthorizeUserResponse);
+    rpc RefreshTokens(RefreshTokensRequest) returns (RefreshTokensResponse);
 }

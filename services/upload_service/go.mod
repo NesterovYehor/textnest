@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20241219115743-1fc570c286c3
+	github.com/NesterovYehor/TextNest/pkg v0.0.0-20250206111740-921427652ab7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.1
 	github.com/lib/pq v1.10.9
@@ -43,6 +43,9 @@ require (
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.7 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.34.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/redis v0.34.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
 )
 
 require (

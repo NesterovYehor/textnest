@@ -73,3 +73,16 @@ func (c *AuthClient) AuthorizeUser(token string) (string, error) {
 
 	return res.UserId, nil
 }
+
+func (c *AuthClient) RefreshTokens(token string) (*auth.RefreshTokensResponse, error) {
+	req := auth.RefreshTokensRequest{
+		Tocken: token,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	res, err := c.client.RefreshTokens(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

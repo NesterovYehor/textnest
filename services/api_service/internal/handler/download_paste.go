@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/NesterovYehor/TextNest/pkg/errors"
 	"github.com/NesterovYehor/TextNest/pkg/helpers"
@@ -11,28 +13,11 @@ import (
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 )
 
-func DownloadHandler(cfg *config.Config, app *app.AppContext) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		app.Logger.PrintInfo(ctx, fmt.Sprintln(ctx), nil)
-		userID := ctx.Value("user_id") // Use the correct context key
-
-		if userID == nil {
-			app.Logger.PrintInfo(ctx, "No user ID found, calling DownloadPaste", nil)
-			DownloadPaste(cfg, app)(w, r)
-			return
-		}
-
-		userIDStr, ok := userID.(string)
-		if !ok || userIDStr == "" {
-			app.Logger.PrintInfo(ctx, "User ID is empty or invalid, calling DownloadPaste", nil)
-			DownloadPaste(cfg, app)(w, r)
-			return
-		}
-
-		app.Logger.PrintInfo(ctx, fmt.Sprintf("User authenticated (ID: %s), calling DownloadAllPastesOfUser", userIDStr), nil)
-		DownloadAllPastesOfUser(userIDStr, cfg, app)(w, r)
-	})
+var responseBufferPool = sync.Pool{
+	New: func() interface{} {
+		// Allocate a new bytes.Buffer. Adjust initial capacity if needed.
+		return new(bytes.Buffer)
+	},
 }
 
 func DownloadPaste(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
@@ -56,14 +41,17 @@ func DownloadPaste(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
 			errors.ServerErrorResponse(w, err)
 			return
 		}
+		buf := responseBufferPool.Get().(*bytes.Buffer)
+		buf.Reset()
+		defer responseBufferPool.Put(buf)
 
 		// Create response data
 		response := helpers.Envelope{
-			"creation_date":   downloadResp.CreatedDate.AsTime(),
-			"content":         string(downloadResp.Content),
-			"expiration_date": downloadResp.ExpirationDate.AsTime(),
+			"creation_date":   downloadResp.Metadata.CreatedAt.AsTime(),
+			"content_url":     downloadResp.DownlaodUrl,
+			"title":           downloadResp.Metadata.Title,
+			"expiration_date": downloadResp.Metadata.ExpiredDate.AsTime(),
 		}
-
 		// Send response
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
@@ -72,21 +60,26 @@ func DownloadPaste(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
 	}
 }
 
-func DownloadAllPastesOfUser(userId string, cfg *config.Config, app *app.AppContext) http.HandlerFunc {
+func DownloadAllPastesOfUser(cfg *config.Config, app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		userId, ok := r.Context().Value("user_id").(string)
+		if !ok {
+			errors.NoTokenProvided(w)
+			app.Logger.PrintError(ctx, fmt.Errorf("Failed to get user id"), nil)
+			return
+		}
+
 		limit := r.URL.Query().Get("limit")
 		offset := r.URL.Query().Get("offset")
 
-		// Set default values if not provided
 		if limit == "" {
-			limit = "10" // Default limit value
+			limit = "10"
 		}
 		if offset == "" {
-			offset = "0" // Default offset value
+			offset = "0"
 		}
 
-		// Convert limit and offset to integers
 		limitInt, err := strconv.Atoi(limit)
 		if err != nil {
 			http.Error(w, "Invalid limit value", http.StatusBadRequest)
@@ -103,17 +96,21 @@ func DownloadAllPastesOfUser(userId string, cfg *config.Config, app *app.AppCont
 		pastes, err := app.DownloadClient.DownloadByUserId(userId, int32(limitInt), int32(offsetInt))
 		if err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("Failed to fetch pastes: %v", err), nil)
-			errors.
-				ServerErrorResponse(w, err)
+			errors.ServerErrorResponse(w, err)
 			return
 		}
-
-		// Prepare response
-		response := helpers.Envelope{
-			"pastes": pastes,
+		for _, paste := range pastes.Objects {
+			app.Logger.PrintInfo(ctx, paste.Title, nil)
 		}
 
-		// Send response
+		app.Logger.PrintInfo(ctx, fmt.Sprintln(pastes), nil)
+		// Directly use the Protobuf message inside the response envelope
+		response := helpers.Envelope{
+			"pastes": pastes.Objects, // Use GetObjects() to get []Metadata directly
+		}
+		app.Logger.PrintInfo(ctx, fmt.Sprintln(response), nil)
+
+		// Use WriteJSON, which should handle Protobuf struct conversion automatically
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
 			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))

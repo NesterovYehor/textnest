@@ -2,10 +2,16 @@ package coordinators
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"sync"
 
-	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	"github.com/NesterovYehor/TextNest/pkg/kafka"
+	log "github.com/NesterovYehor/TextNest/pkg/logger"
 	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/cache"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
+	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/services"
 )
 
@@ -13,19 +19,29 @@ type DownloadCoordinator struct {
 	fetchMetadataService *services.FetchMetadataService
 	fetchContentService  *services.FetchContentService
 	cfg                  *config.Config
-	logger               *jsonlog.Logger
+	logger               *log.Logger
 	pb.UnsafePasteDownloadServer
 }
 
-func NewDownloadCoordinator(ctx context.Context, cfg *config.Config, log *jsonlog.Logger) (*DownloadCoordinator, error) {
-	factory := services.NewServiceFactory(cfg, log)
-	fetchMetadataService, err := factory.CreateFetchMetadataService(ctx)
+func NewDownloadCoordinator(ctx context.Context, cfg *config.Config, log *log.Logger, db *sql.DB) (*DownloadCoordinator, error) {
+	cache, err := cache.NewRedisCache(cfg.RedisMetadataAddr)
 	if err != nil {
 		return nil, err
 	}
-	fetchContentService, err := factory.CreateFetchContentService(ctx)
+	kafkaProducer, err := kafka.NewProducer(cfg.Kafka, ctx)
 	if err != nil {
 		return nil, err
+	}
+	metadataRepo := repository.NewMetadataRepo(db)
+	contentRepo, err := repository.NewContentRepository(cfg.BucketName, cfg.S3Region)
+	if err != nil {
+		log.PrintFatal(ctx, err, nil)
+	}
+
+	fetchMetadataService := services.NewFetchMetadataService(metadataRepo, cache, kafkaProducer)
+	fetchContentService, err := services.NewFetchContentService(contentRepo, log)
+	if err != nil {
+		log.PrintFatal(ctx, err, nil)
 	}
 
 	return &DownloadCoordinator{
@@ -37,25 +53,48 @@ func NewDownloadCoordinator(ctx context.Context, cfg *config.Config, log *jsonlo
 }
 
 func (coord *DownloadCoordinator) DownloadByKey(ctx context.Context, req *pb.DownloadByKeyRequest) (*pb.DownloadByKeyResponse, error) {
+	var wg sync.WaitGroup
+	errors := make(chan error, 2) // Buffered channel to avoid deadlock
+
+	ress := &pb.DownloadByKeyResponse{}
+	wg.Add(2)
+
 	// Fetch metadata
-	metadata, err := coord.fetchMetadataService.FetchMetadataByKey(ctx, req.Key)
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		defer wg.Done()
+		metadata, err := coord.fetchMetadataService.FetchMetadataByKey(ctx, req.Key)
+		coord.logger.PrintInfo(ctx, fmt.Sprintf("Title: %v", metadata.Title), nil)
+		coord.logger.PrintInfo(ctx, fmt.Sprintf("Metadata: %v", metadata), nil)
+		if err != nil {
+			errors <- err
+			return
+		}
+		ress.Metadata = metadata
+	}()
 
 	// Fetch content
-	content, err := coord.fetchContentService.GetContent(ctx, req.Key)
-	if err != nil {
-		return nil, err
+	go func() {
+		defer wg.Done()
+		url, err := coord.fetchContentService.GetContentUrl(ctx, req.Key)
+		if err != nil {
+			errors <- err
+			return
+		}
+		ress.DownlaodUrl = url
+	}()
+
+	// Wait for goroutines to finish
+	wg.Wait()
+	close(errors)
+
+	// Check if there were any errors
+	for err := range errors {
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Build and return the response
-	return &pb.DownloadByKeyResponse{
-		Key:            req.Key,
-		ExpirationDate: metadata.ExpiredDate,
-		CreatedDate:    metadata.CreatedAt,
-		Content:        content,
-	}, nil
+	return ress, nil
 }
 
 func (coord *DownloadCoordinator) DownloadByUserId(ctx context.Context, req *pb.DownloadByUserIdRequest) (*pb.DownloadByUserIdResponse, error) {

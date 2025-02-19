@@ -19,7 +19,6 @@ type Config struct {
 	S3Region          string            `yaml:"region"`
 	DBURL             string            `yaml:"db"`
 	RedisMetadataAddr string            `yaml:"metadata_cache_addr"`
-	RedisContentAddr  string            `yaml:"content_cache_addr"`
 
 	ExpirationInterval time.Duration `yaml:"expiration_interval"`
 }
@@ -53,11 +52,9 @@ func LoadConfig(log *jsonlog.Logger, ctx context.Context) (*Config, error) {
 		log.PrintFatal(ctx, fmt.Errorf("kafka configuration is incomplete"), nil)
 	}
 	if cfg.BucketName == "" || cfg.S3Region == "" {
-		log.PrintInfo(ctx, cfg.BucketName, nil)
-		log.PrintInfo(ctx, cfg.S3Region, nil)
 		log.PrintFatal(ctx, fmt.Errorf("S3 configuration is incomplete"), nil)
 	}
-	if cfg.RedisContentAddr == "" || cfg.RedisMetadataAddr == "" {
+	if cfg.RedisMetadataAddr == "" {
 		log.PrintFatal(ctx, fmt.Errorf("redis cahce configuration is incomplete"), nil)
 	}
 	return &cfg, nil

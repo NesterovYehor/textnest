@@ -7,10 +7,8 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
-	"github.com/google/uuid"
+	pb "github.com/NesterovYehor/TextNest/services/upload_service/api"
 	"github.com/sony/gobreaker"
-
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
 )
 
 type MetadataRepository struct {
@@ -25,9 +23,9 @@ func NewMetadataRepository(db *sql.DB) *MetadataRepository {
 		MaxRequests: 3,
 		Interval:    10 * time.Second,
 		Timeout:     30 * time.Second,
-        ReadyToTrip: func(counts gobreaker.Counts) bool {
-        return counts.ConsecutiveFailures > 5
-    },
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures > 5
+		},
 	}
 	return &MetadataRepository{
 		DB:      db,
@@ -36,18 +34,18 @@ func NewMetadataRepository(db *sql.DB) *MetadataRepository {
 }
 
 // UploadPasteMetadata inserts metadata into the database with circuit breaker protection.
-func (repo *MetadataRepository) InsertPasteMetadata(ctx context.Context, data *models.MetaData) error {
+func (repo *MetadataRepository) InsertPasteMetadata(ctx context.Context, data *pb.UploadPasteRequest) error {
 	operation := func(ctx context.Context) (any, error) {
 		query := `
-        INSERT INTO metadata(key, user_id, created_at, expiration_date) 
+        INSERT INTO metadata(key, title, user_id, expiration_date) 
         VALUES ($1, NULLIF($2, ''), $3, $4)
         `
 
 		args := []any{
 			data.Key,
+            data.Title,
 			data.UserId,
-			data.CreatedAt,
-			data.ExpirationDate,
+			data.ExpirationDate.AsTime(),
 		}
 		// Execute the query
 		_, err := repo.DB.ExecContext(ctx, query, args...)
@@ -109,12 +107,12 @@ func (repo *MetadataRepository) ExpireAllPastesByUserId(ctx context.Context, use
 }
 
 func (repo *MetadataRepository) GetPasteOwner(ctx context.Context, key string) (string, error) {
-	query := `SELECT user_id FROM metadata WHERE key = $1)`
+	query := `SELECT user_id FROM metadata WHERE key = $1`
 
-	var userId uuid.UUID
+	var userId string
 	err := repo.DB.QueryRowContext(ctx, query, key).Scan(&userId)
 	if err != nil {
 		return "", err
 	}
-	return userId.String(), nil
+	return userId, nil
 }

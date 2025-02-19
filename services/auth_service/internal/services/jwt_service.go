@@ -20,6 +20,9 @@ func NewJwtService(jwtCfg *config.JwtConfig) *JwtService {
 }
 
 func (srv *JwtService) ExtractUserID(token string, expectedType string) (string, error) {
+	if expectedType != "access" && expectedType != "refresh" {
+		return "", fmt.Errorf("invalid token type: %s", expectedType)
+	}
 	secret := ""
 	if expectedType == "access" {
 		secret = srv.JwtConfig.AccessSecret
@@ -48,25 +51,39 @@ func (srv *JwtService) ExtractUserID(token string, expectedType string) (string,
 	return userID, nil
 }
 
-func (srv *JwtService) GenerateAccessTocken(userId string) (string, error) {
-	return srv.generateToken(userId, "access", srv.JwtConfig.AccessExpiry, []byte(srv.JwtConfig.AccessSecret))
+func (srv *JwtService) GenerateAccessToken(userId string) (string, time.Time, error) {
+	return srv.generateToken(userId, "access")
 }
 
-func (srv *JwtService) GenerateRefreshTocken(userId string) (string, error) {
-	return srv.generateToken(userId, "refresh", srv.JwtConfig.RefreshExpiry, []byte(srv.JwtConfig.RefreshSecret))
+func (srv *JwtService) GenerateRefreshToken(userId string) (string, time.Time, error) {
+	return srv.generateToken(userId, "refresh")
 }
 
 func (srv *JwtService) generateToken(
 	userId string,
 	tokenType string, // "access" or "refresh"
-	expiry time.Duration, // e.g., 15m or 7d
-	secret []byte, // secret key for signing
-) (string, error) {
+) (string, time.Time, error) {
+	var expiry time.Duration
+	var secret []byte
+	switch tokenType {
+	case "access":
+		expiry = srv.JwtConfig.AccessExpiry
+		secret = []byte(srv.JwtConfig.AccessSecret)
+	case "refresh":
+		expiry = srv.JwtConfig.RefreshExpiry
+		secret = []byte(srv.JwtConfig.RefreshSecret)
+	default:
+		return "", time.Time{}, fmt.Errorf("invalid token type: %s", tokenType)
+	}
 	claims := jwt.MapClaims{
 		"user_id": userId,
 		"type":    tokenType,
 		"exp":     time.Now().Add(expiry).Unix(),
 	}
 	token := jwt.NewWithClaims(srv.JwtConfig.SigningMethod, claims)
-	return token.SignedString(secret) // Sign with the correct secret
+	tokenStr, err := token.SignedString(secret)
+	if err != nil {
+		return "", time.Now(), err
+	}
+	return tokenStr, time.Now().Add(expiry), nil
 }

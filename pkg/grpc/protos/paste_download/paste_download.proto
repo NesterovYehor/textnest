@@ -35,16 +35,15 @@ message DownloadByKeyRequest {
 
 // Response message for downloading an object by key.
 message DownloadByKeyResponse {
-    string key = 1;  // The unique key of the downloaded object.
-    google.protobuf.Timestamp expiration_date = 2;  // The expiration date of the object.
-    google.protobuf.Timestamp created_date = 3;  // The creation date of the object.
-    bytes content = 4;  // The binary content of the downloaded object.
+    Metadata metadata = 1;
+    string downlaod_url = 2;  // The binary content of the downloaded object.
 }
 
 // Metadata for tracking the object.
 message Metadata {
     string key = 1;
-    google.protobuf.Timestamp created_at = 2;
-    google.protobuf.Timestamp expired_date = 3;
+    string title = 2;
+    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp expired_date = 4;
 }
 

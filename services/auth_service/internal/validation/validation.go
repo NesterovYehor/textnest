@@ -61,7 +61,7 @@ func ValidateUser(user *models.User) error {
 
 func ValidateJwtToken(tokenString, secret, expectedType string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil 
+		return []byte(secret), nil
 	})
 	if err != nil {
 		return nil, err
@@ -81,4 +81,3 @@ func ValidateJwtToken(tokenString, secret, expectedType string) (*jwt.Token, err
 
 	return token, nil
 }
-

@@ -1,0 +1,14 @@
+package models
+
+import (
+	"time"
+
+	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+type Metadata struct {
+	Key            string
+	CreatedAt      time.Time
+	ExpirationDate time.Time // Renamed from ExpiredDate
+}

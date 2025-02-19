@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/NesterovYehor/TextNest/pkg/errors"
@@ -51,13 +50,45 @@ func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 
 		ress, err := app.AuthClient.LogIn(input.Emain, input.Password)
 		if err != nil {
-			app.Logger.PrintInfo(ctx, fmt.Sprintf("response of Autherization: %v", ress), nil)
 			app.Logger.PrintError(ctx, err, nil)
 			errors.BadRequestResponse(w, http.StatusBadRequest, err)
 		}
 		response := helpers.Envelope{
-			"access_token":  ress.AccessToken,
-			"refresh_token": ress.RefreshToken,
+			"access_token":       ress.AccessToken,
+			"refresh_token":      ress.RefreshToken,
+			"expires_at":         ress.ExpiresIn.AsTime(),
+			"refresh_expires_at": ress.RefreshExpiresAt.AsTime(),
+		}
+
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
+			errors.ServerErrorResponse(w, err)
+		}
+	}
+}
+
+func RefreshTokens(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var input struct {
+			Refresh string `json:"refresh_token"`
+		}
+		if err := helpers.ReadJSON(w, r, &input); err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, err)
+			return
+		}
+		ress, err := app.AuthClient.RefreshTokens(input.Refresh)
+		if err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+
+		response := helpers.Envelope{
+			"access_token":       ress.AccessToken,
+			"refresh_token":      ress.RefreshToken,
+			"expires_at":         ress.ExpiresIn.AsTime(),
+			"refresh_expires_at": ress.RefreshExpiresAt.AsTime(),
 		}
 
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {

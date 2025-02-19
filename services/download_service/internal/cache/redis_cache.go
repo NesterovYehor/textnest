@@ -6,48 +6,55 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
+	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
+    "google.golang.org/protobuf/proto"
 	"github.com/redis/go-redis/v9"
 	"github.com/sony/gobreaker"
 )
 
 type redisCache struct {
-	client  *redis.Client
-	breaker *middleware.CircuitBreakerMiddleware
-	ctx     context.Context
+	client     *redis.Client
+	breaker    *middleware.CircuitBreakerMiddleware
+	expiration time.Duration
 }
 
 // NewRedisCache initializes a new Redis cache instance
-func NewRedisCache(ctx context.Context, redisAddr string) Cache {
+func NewRedisCache(redisAddr string) (Cache, error) {
 	cbSettings := gobreaker.Settings{
 		Name:        "MetadataRepo",
-		MaxRequests: 5,                // Max requests allowed in half-open state
-		Interval:    5 * time.Second,  // Time window for tracking errors
-		Timeout:     30 * time.Second, // Time to reset the circuit after tripping
+		MaxRequests: 5,
+		Interval:    5 * time.Second,
+		Timeout:     30 * time.Second,
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: redisAddr,
+		Addr:     redisAddr,
+		DB:       0,
+		PoolSize: 10,
 	})
-	return &redisCache{
-		client:  rdb,
-		breaker: middleware.NewCircuitBreakerMiddleware(cbSettings),
-		ctx:     ctx,
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		return nil, err
 	}
+	return &redisCache{
+		client:     rdb,
+		expiration: time.Hour * 24,
+		breaker:    middleware.NewCircuitBreakerMiddleware(cbSettings),
+	}, nil
 }
 
-// Set stores Protobuf-serialized data in Redis
-func (r *redisCache) Set(key string, value []byte, expiration time.Duration) error {
+func (r *redisCache) Set(ctx context.Context, key string, value *pb.Metadata) error {
 	operation := func(ctx context.Context) (any, error) {
-		// Use the Redis client to set the value with expiration
-		err := r.client.Set(ctx, key, value, expiration).Err()
+		data, err := proto.Marshal(value)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to marshal value to bytes:%v", err)
+		}
+		if err := r.client.Set(ctx, key, data, r.expiration).Err(); err != nil {
+			return nil, fmt.Errorf("Failed to store data in cache: %v", err)
 		}
 		return nil, nil
 	}
 
-	// Execute the operation using the Circuit Breaker middleware
-	_, err := r.breaker.Execute(r.ctx, operation)
+	_, err := r.breaker.Execute(ctx, operation)
 	if err != nil {
 		return fmt.Errorf("failed to set key in Redis: %w", err)
 	}
@@ -55,39 +62,27 @@ func (r *redisCache) Set(key string, value []byte, expiration time.Duration) err
 	return nil
 }
 
-func (r *redisCache) Get(key string) ([]byte, bool, error) {
-	// Define the operation for the Circuit Breaker
-	operation := func(ctx context.Context) (any, error) {
-		val, err := r.client.Get(ctx, key).Bytes()
-		if err == redis.Nil {
-			// Key not found
-			return nil, nil
-		} else if err != nil {
-			return nil, err
-		}
-		return val, nil
+func (r *redisCache) Get(ctx context.Context, key string) (*pb.Metadata, bool, error) {
+	val, err := r.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	metadata := &pb.Metadata{}
+	if err := proto.Unmarshal(val, metadata); err != nil {
+		return nil, false, fmt.Errorf("failed to unmarshal data from cache: %v", err)
 	}
 
-	// Execute the operation with the Circuit Breaker middleware
-	result, err := r.breaker.Execute(r.ctx, operation)
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to get key from Redis: %w", err)
-	}
-
-	// If the operation was successful, handle the returned value
-	if result == nil {
-		return nil, false, nil // Key not found
-	}
-
-	return result.([]byte), true, nil
+	return metadata, true, nil
 }
 
-func (r *redisCache) Delete(key string) error {
+func (r *redisCache) Delete(ctx context.Context, key string) error {
 	operation := func(ctx context.Context) (any, error) {
 		return nil, r.client.Del(ctx, key).Err()
 	}
 
-	_, err := r.breaker.Execute(r.ctx, operation)
+	_, err := r.breaker.Execute(ctx, operation)
 	if err != nil {
 		return fmt.Errorf("failed to delete key from Redis: %w", err)
 	}
@@ -95,12 +90,10 @@ func (r *redisCache) Delete(key string) error {
 	return nil
 }
 
-// Clear removes all keys from the current Redis database
-func (r *redisCache) Clear() error {
-	return r.client.FlushDB(r.ctx).Err()
+func (r *redisCache) Clear(ctx context.Context) error {
+	return r.client.FlushDB(ctx).Err()
 }
 
-// Close closes the Redis client connection
 func (r *redisCache) Close() error {
 	return r.client.Close()
 }
