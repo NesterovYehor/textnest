@@ -17,21 +17,22 @@ func NewStorageService(repo *repository.ContentRepository, log *jsonlog.Logger) 
 	return &ContentManagementService{repo: repo, log: log}
 }
 
-func (svc *ContentManagementService) SaveContent(ctx context.Context, key string, data []byte) error {
-	if err := svc.repo.UploadPasteContent(ctx, key, data); err != nil {
-		err = fmt.Errorf("failed to save content: %w", err)
-		svc.log.PrintError(ctx, err, map[string]string{"key": key})
-		return err
+func (svc *ContentManagementService) GenerateUploadURL(ctx context.Context, key string) (string, error) {
+	// Validate input
+	if key == "" {
+		return "", fmt.Errorf("key cannot be empty")
 	}
 
-	svc.log.PrintInfo(ctx, "Content uploaded successfully", map[string]string{"key": key})
-	return nil
-}
-
-func (svc *ContentManagementService) UpdateContent(ctx context.Context, key string, data []byte) error {
-	if err := svc.repo.UploadPasteContent(ctx, key, data); err != nil {
+	// Call the repository to get a presigned URL
+	uploadURL, err := svc.repo.GenerateUploadURL(ctx, key)
+	if err != nil {
+		err = fmt.Errorf("failed to generate upload URL: %w", err)
 		svc.log.PrintError(ctx, err, map[string]string{"key": key})
-		return err
+		return "", err
 	}
-	return nil
+
+	// Log success
+	svc.log.PrintInfo(ctx, "Presigned URL generated successfully", map[string]string{"key": key})
+
+	return uploadURL, nil
 }

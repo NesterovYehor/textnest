@@ -8,8 +8,9 @@ import (
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/models"
+	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
 	"github.com/sony/gobreaker"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MetadataRepo struct {
@@ -31,15 +32,18 @@ func NewMetadataRepo(db *sql.DB) *MetadataRepo {
 	}
 }
 
-func (repo *MetadataRepo) DownloadPasteMetadata(ctx context.Context, key string) (*models.Metadata, error) {
+func (repo *MetadataRepo) DownloadPasteMetadata(ctx context.Context, key string) (*pb.Metadata, error) {
 	operation := func(ctx context.Context) (any, error) {
-		query := `SELECT key, created_at, expiration_date FROM metadata WHERE key = $1`
-		var paste models.Metadata
+		query := `SELECT key, title, created_at, expiration_date FROM metadata WHERE key = $1`
+		var paste pb.Metadata
+		var createdAt time.Time
+		var expiredDate time.Time
 
 		err := repo.DB.QueryRowContext(ctx, query, key).Scan(
 			&paste.Key,
-			&paste.CreatedAt,
-			&paste.ExpirationDate, // Corrected field name
+			&paste.Title,
+			&createdAt,
+			&expiredDate,
 		)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -47,6 +51,8 @@ func (repo *MetadataRepo) DownloadPasteMetadata(ctx context.Context, key string)
 			}
 			return nil, fmt.Errorf("query failed: %w", err)
 		}
+		paste.CreatedAt = timestamppb.New(createdAt)
+		paste.ExpiredDate = timestamppb.New(expiredDate)
 		return &paste, nil
 	}
 
@@ -55,29 +61,33 @@ func (repo *MetadataRepo) DownloadPasteMetadata(ctx context.Context, key string)
 		return nil, fmt.Errorf("circuit breaker error: %w", err)
 	}
 
-	paste, ok := result.(*models.Metadata)
+	paste, ok := result.(*pb.Metadata)
 	if !ok {
 		return nil, errors.New("unexpected result type")
 	}
 	return paste, nil
 }
 
-func (repo *MetadataRepo) DownloadMetadataByUserId(ctx context.Context, userId string, limit, offcet int) ([]models.Metadata, error) {
+func (repo *MetadataRepo) DownloadMetadataByUserId(ctx context.Context, userId string, limit, offset int) ([]*pb.Metadata, error) {
 	operation := func(ctx context.Context) (any, error) {
-        query := `SELECT key, created_at, expiration_date FROM metadata WHERE user_id = $1 LIMIT $2 OFFSET $3`
-		rows, err := repo.DB.QueryContext(ctx, query, userId, limit, offcet)
+		query := `SELECT key, title, created_at, expiration_date FROM metadata WHERE user_id = $1 LIMIT $2 OFFSET $3`
+		rows, err := repo.DB.QueryContext(ctx, query, userId, limit, offset)
 		if err != nil {
 			return nil, fmt.Errorf("query failed: %w", err)
 		}
 		defer rows.Close()
 
-		var metadata []models.Metadata
+		var metadata []*pb.Metadata
 		for rows.Next() {
-			var m models.Metadata
-			if err := rows.Scan(&m.Key, &m.CreatedAt, &m.ExpirationDate); err != nil {
+			var expiredDate time.Time
+			var createdAt time.Time
+			var m pb.Metadata
+			if err := rows.Scan(&m.Key, &m.Title, &createdAt, &expiredDate); err != nil { // FIX: Added `&` before m.Title
 				return nil, fmt.Errorf("scan failed: %w", err)
 			}
-			metadata = append(metadata, m)
+			m.CreatedAt = timestamppb.New(createdAt)
+			m.ExpiredDate = timestamppb.New(expiredDate)
+			metadata = append(metadata, &m)
 		}
 		if err := rows.Err(); err != nil {
 			return nil, fmt.Errorf("rows error: %w", err)
@@ -90,7 +100,7 @@ func (repo *MetadataRepo) DownloadMetadataByUserId(ctx context.Context, userId s
 		return nil, fmt.Errorf("circuit breaker error: %w", err)
 	}
 
-	metadata, ok := result.([]models.Metadata)
+	metadata, ok := result.([]*pb.Metadata)
 	if !ok {
 		return nil, errors.New("unexpected result type")
 	}

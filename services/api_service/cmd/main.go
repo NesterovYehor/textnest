@@ -33,7 +33,7 @@ func main() {
 		return
 	}
 
-	appContext, err := app.GetAppContext(cfg, ctx, logger)
+	appContext, err := app.NewAppContext(cfg, ctx, logger)
 	if err != nil {
 		logger.PrintFatal(ctx, fmt.Errorf("failed to initialize app context: %w", err), nil)
 		return
@@ -45,12 +45,14 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.Handle("/v1/upload", midlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(appContext))))
-	mux.Handle("/v1/download", midlewares.Authenticate(handler.DownloadHandler(cfg, appContext)))
-	mux.Handle("/v1/expire/{key}", midlewares.Authenticate(handler.ExpirePasteHandler(appContext)))
-	mux.Handle("/v1/expire/all", midlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
-	mux.HandleFunc("/v1/signup", handler.SignUpHandler(appContext, ctx))
-	mux.HandleFunc("/v1/login", handler.LogInHandler(appContext, ctx))
+	mux.Handle("POST /v1/upload", middlewares.Authenticate(http.HandlerFunc(handler.UploadPasteHandler(appContext))))
+	mux.Handle("GET /v1/download", middlewares.Authenticate(handler.DownloadPaste(cfg, appContext)))
+	mux.Handle("GET /v1/download/all", middlewares.Authenticate(handler.DownloadAllPastesOfUser(cfg, appContext)))
+	mux.Handle("GET /v1/update/{key}", middlewares.Authenticate(handler.UpdatePasteHandler(appContext)))
+	mux.Handle("/v1/expire/all", middlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
+	mux.HandleFunc("POST /v1/signup", handler.SignUpHandler(appContext, ctx))
+	mux.HandleFunc("GET /v1/login", handler.LogInHandler(appContext, ctx))
+	mux.Handle("POST /v1/refresh", http.HandlerFunc(handler.RefreshTokens(appContext)))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})

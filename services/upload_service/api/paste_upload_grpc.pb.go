@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	PasteUpload_UploadPaste_FullMethodName             = "/pasteupload.PasteUpload/UploadPaste"
 	PasteUpload_UploadUpdates_FullMethodName           = "/pasteupload.PasteUpload/UploadUpdates"
-	PasteUpload_ExpirePaste_FullMethodName             = "/pasteupload.PasteUpload/ExpirePaste"
 	PasteUpload_ExpireAllPastesByUserID_FullMethodName = "/pasteupload.PasteUpload/ExpireAllPastesByUserID"
 )
 
@@ -33,7 +32,6 @@ const (
 type PasteUploadClient interface {
 	UploadPaste(ctx context.Context, in *UploadPasteRequest, opts ...grpc.CallOption) (*UploadPasteResponse, error)
 	UploadUpdates(ctx context.Context, in *UploadUpdatesRequest, opts ...grpc.CallOption) (*UploadUpdatesResponse, error)
-	ExpirePaste(ctx context.Context, in *ExpirePasteRequest, opts ...grpc.CallOption) (*ExpirePasteResponse, error)
 	ExpireAllPastesByUserID(ctx context.Context, in *ExpireAllPastesByUserIDRequest, opts ...grpc.CallOption) (*ExpireAllPastesByUserIDResponse, error)
 }
 
@@ -65,16 +63,6 @@ func (c *pasteUploadClient) UploadUpdates(ctx context.Context, in *UploadUpdates
 	return out, nil
 }
 
-func (c *pasteUploadClient) ExpirePaste(ctx context.Context, in *ExpirePasteRequest, opts ...grpc.CallOption) (*ExpirePasteResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ExpirePasteResponse)
-	err := c.cc.Invoke(ctx, PasteUpload_ExpirePaste_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *pasteUploadClient) ExpireAllPastesByUserID(ctx context.Context, in *ExpireAllPastesByUserIDRequest, opts ...grpc.CallOption) (*ExpireAllPastesByUserIDResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ExpireAllPastesByUserIDResponse)
@@ -93,7 +81,6 @@ func (c *pasteUploadClient) ExpireAllPastesByUserID(ctx context.Context, in *Exp
 type PasteUploadServer interface {
 	UploadPaste(context.Context, *UploadPasteRequest) (*UploadPasteResponse, error)
 	UploadUpdates(context.Context, *UploadUpdatesRequest) (*UploadUpdatesResponse, error)
-	ExpirePaste(context.Context, *ExpirePasteRequest) (*ExpirePasteResponse, error)
 	ExpireAllPastesByUserID(context.Context, *ExpireAllPastesByUserIDRequest) (*ExpireAllPastesByUserIDResponse, error)
 	mustEmbedUnimplementedPasteUploadServer()
 }
@@ -110,9 +97,6 @@ func (UnimplementedPasteUploadServer) UploadPaste(context.Context, *UploadPasteR
 }
 func (UnimplementedPasteUploadServer) UploadUpdates(context.Context, *UploadUpdatesRequest) (*UploadUpdatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadUpdates not implemented")
-}
-func (UnimplementedPasteUploadServer) ExpirePaste(context.Context, *ExpirePasteRequest) (*ExpirePasteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExpirePaste not implemented")
 }
 func (UnimplementedPasteUploadServer) ExpireAllPastesByUserID(context.Context, *ExpireAllPastesByUserIDRequest) (*ExpireAllPastesByUserIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExpireAllPastesByUserID not implemented")
@@ -174,24 +158,6 @@ func _PasteUpload_UploadUpdates_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PasteUpload_ExpirePaste_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExpirePasteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PasteUploadServer).ExpirePaste(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PasteUpload_ExpirePaste_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PasteUploadServer).ExpirePaste(ctx, req.(*ExpirePasteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _PasteUpload_ExpireAllPastesByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ExpireAllPastesByUserIDRequest)
 	if err := dec(in); err != nil {
@@ -224,10 +190,6 @@ var PasteUpload_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadUpdates",
 			Handler:    _PasteUpload_UploadUpdates_Handler,
-		},
-		{
-			MethodName: "ExpirePaste",
-			Handler:    _PasteUpload_ExpirePaste_Handler,
 		},
 		{
 			MethodName: "ExpireAllPastesByUserID",

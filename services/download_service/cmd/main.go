@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
-	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	log "github.com/NesterovYehor/TextNest/pkg/logger"
 	pb "github.com/NesterovYehor/TextNest/services/download_service/api"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/config"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/coordinators"
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 func main() {
@@ -25,40 +26,37 @@ func main() {
 		return
 	}
 
-	// Setup graceful shutdown on SIGINT or SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Initialize configuration
 	cfg, err := config.LoadConfig(log, ctx)
 	if err != nil {
 		log.PrintError(ctx, err, nil)
+		return
 	}
 
-	_, err = initializeDatabase(cfg.DBURL, log, ctx)
+	db, err := initializeDatabase(cfg.DBURL, log, ctx)
 	if err != nil {
 		log.PrintError(ctx, err, nil)
+		return
 	}
 
-	// Initialize gRPC server
 	grpcSrv := grpc.NewGrpcServer(cfg.Grpc)
 
-	coord, err := coordinators.NewDownloadCoordinator(ctx, cfg, log)
+	coord, err := coordinators.NewDownloadCoordinator(ctx, cfg, log, db)
 	if err != nil {
 		log.PrintError(ctx, err, nil)
+		return
 	}
-	// Register the UploadService with the gRPC server
 	pb.RegisterPasteDownloadServer(grpcSrv.Grpc, coord)
 
-	// Run the gRPC server
 	if err := grpcSrv.RunGrpcServer(ctx); err != nil {
 		log.PrintFatal(ctx, err, nil)
 		return
 	}
 }
 
-// setupLogger initializes the application logger
-func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
+func setupLogger(logFilePath string) (*log.Logger, error) {
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
@@ -66,10 +64,10 @@ func setupLogger(logFilePath string) (*jsonlog.Logger, error) {
 		return nil, err
 	}
 	multiWriter := io.MultiWriter(logFile, os.Stdout)
-	return jsonlog.New(multiWriter, slog.LevelInfo), nil
+	return log.New(multiWriter, slog.LevelInfo), nil
 }
 
-func initializeDatabase(dsn string, log *jsonlog.Logger, ctx context.Context) (*sql.DB, error) {
+func initializeDatabase(dsn string, log *log.Logger, ctx context.Context) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)

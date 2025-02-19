@@ -3,11 +3,12 @@ module github.com/NesterovYehor/TextNest/services/api_service
 go 1.23.1
 
 require (
-	github.com/NesterovYehor/TextNest/pkg v0.0.0-20250205002313-804b77063336
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.4
+	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/NesterovYehor/TextNest/pkg v0.0.0-20250206111740-921427652ab7
 
 require (
 	golang.org/x/net v0.34.0 // indirect

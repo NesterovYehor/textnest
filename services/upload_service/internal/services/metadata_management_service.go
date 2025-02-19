@@ -6,7 +6,7 @@ import (
 	"time"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/NesterovYehor/TextNest/services/upload_service/internal/models"
+	pb "github.com/NesterovYehor/TextNest/services/upload_service/api"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/repository"
 	"github.com/NesterovYehor/TextNest/services/upload_service/internal/validation"
 )
@@ -20,7 +20,7 @@ func NewMetadataManagementService(repo *repository.MetadataRepository, log *json
 	return &MetadataManagementService{repo: repo, log: log}
 }
 
-func (ms *MetadataManagementService) ValidateAndSave(ctx context.Context, metadata *models.MetaData) error {
+func (ms *MetadataManagementService) ValidateAndSave(ctx context.Context, metadata *pb.UploadPasteRequest) error {
 	if v := validation.ValidateMetaData(metadata); !v.Valid() {
 		err := fmt.Errorf("metadata validation errors: %v", v.Errors)
 		ms.log.PrintError(ctx, err, map[string]string{"key": metadata.Key})

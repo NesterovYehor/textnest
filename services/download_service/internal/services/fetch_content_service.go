@@ -3,53 +3,29 @@ package services
 import (
 	"context"
 	"fmt"
-	"time"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
-	"github.com/NesterovYehor/TextNest/services/download_service/internal/cache"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
 )
 
 type FetchContentService struct {
-	repo       *repository.ContentRepo
-	cache      cache.Cache
-	logger     *jsonlog.Logger
-	bucketName string // Optional if bucketName is constant for the service
+	repo   *repository.ContentRepo
+	logger *jsonlog.Logger
 }
 
-func newFetchContentService(repo *repository.ContentRepo, cache cache.Cache, log *jsonlog.Logger, bucketName string) (*FetchContentService, error) {
+func NewFetchContentService(repo *repository.ContentRepo, log *jsonlog.Logger) (*FetchContentService, error) {
 	return &FetchContentService{
-		repo:       repo,
-		cache:      cache,
-		logger:     log,
-		bucketName: bucketName,
+		repo:   repo,
+		logger: log,
 	}, nil
 }
 
-func (svc *FetchContentService) GetContent(ctx context.Context, key string) ([]byte, error) {
-	// Try to fetch from cache
-	content, found, err := svc.cache.Get(key)
+func (svc *FetchContentService) GetContentUrl(ctx context.Context, key string) (string, error) {
+	url, err := svc.repo.GenerateDownloadURL(key, ctx)
 	if err != nil {
-		svc.logger.PrintError(ctx, fmt.Errorf("cache retrieval error: %w", err), map[string]string{"key": key})
+		svc.logger.PrintError(ctx, fmt.Errorf("Generattion down load url failed: %w", err), map[string]string{"key": key})
+		return "", fmt.Errorf("could not generate url: %w", err)
 	}
 
-	if found {
-		return content, nil
-	}
-
-	// Fetch from storage if not in cache
-	content, err = svc.repo.DownloadPasteContent(svc.bucketName, key)
-	if err != nil {
-		svc.logger.PrintError(ctx, fmt.Errorf("storage retrieval error: %w", err), map[string]string{"key": key})
-		return nil, fmt.Errorf("could not download paste content: %w", err)
-	}
-
-	// Cache the content asynchronously
-	go func(key string, content []byte) {
-		if cacheErr := svc.cache.Set(key, content, time.Hour); cacheErr != nil {
-			svc.logger.PrintError(ctx, cacheErr, map[string]string{"key": key})
-		}
-	}(key, content)
-
-	return content, nil
+	return url, nil
 }
