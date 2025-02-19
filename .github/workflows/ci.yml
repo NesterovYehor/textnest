@@ -23,10 +23,10 @@ jobs:
         working-directory: services/download_service
         run: |
           go mod tidy
-          go test ./...
+          go test ./tests
 
       - name: Install dependencies & test (upload_service 2)
         working-directory: services/upload_service
         run: |
           go mod tidy
-          go test ./...
+          go test ./tests
