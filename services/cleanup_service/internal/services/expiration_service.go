@@ -4,29 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
 	"github.com/NesterovYehor/TextNest/services/cleanup_service/internal/repository"
 )
 
 type ExpirationService struct {
-	metadataRepo  repository.MetadataRepository
-	storageRepo   repository.StorageRepository
+	metadataRepo  *repository.MetadataRepo
+	storageRepo   *repository.StorageRepo
 	kafkaProducer *kafka.KafkaProducer
-	bucketName    string
 }
 
 func NewExpirationService(
-	metadataRepo repository.MetadataRepository,
-	storageRepo repository.StorageRepository,
+	metadataRepo *repository.MetadataRepo,
+	storageRepo *repository.StorageRepo,
 	kafkaProducer *kafka.KafkaProducer,
-	bucketName string,
 ) *ExpirationService {
 	return &ExpirationService{
 		metadataRepo:  metadataRepo,
 		storageRepo:   storageRepo,
 		kafkaProducer: kafkaProducer,
-		bucketName:    bucketName,
 	}
 }
 
@@ -36,13 +34,14 @@ func (s *ExpirationService) ProcessExpirations(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error retrieving expired pastes: %v", err)
 	}
+	log.Println(expiredKeys)
 
 	if len(expiredKeys) == 0 {
 		return nil // No expired keys to process
 	}
 
 	// Step 2: Delete expired keys from storage
-	if err := s.storageRepo.DeleteExpiredPastes(expiredKeys, s.bucketName); err != nil {
+	if err := s.storageRepo.DeleteExpiredPastes(expiredKeys); err != nil {
 		return fmt.Errorf("error deleting expired pastes from storage: %v", err)
 	}
 

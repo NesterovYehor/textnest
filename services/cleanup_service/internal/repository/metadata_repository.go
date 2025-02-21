@@ -8,17 +8,17 @@ import (
 	"github.com/NesterovYehor/TextNest/pkg/validator"
 )
 
-type metadataRepository struct {
+type MetadataRepo struct {
 	DB *sql.DB // Database connection
 }
 
-func newDBRepository(db *sql.DB) MetadataRepository {
-	return &metadataRepository{
+func NewMetadataRepo(db *sql.DB) *MetadataRepo {
+	return &MetadataRepo{
 		DB: db,
 	}
 }
 
-func (repo *metadataRepository) DeleteAndReturnExpiredKeys() ([]string, error) {
+func (repo *MetadataRepo) DeleteAndReturnExpiredKeys() ([]string, error) {
 	query := `DELETE FROM metadata WHERE expiration_date <= $1 RETURNING key; `
 	var keys []string
 
@@ -43,7 +43,7 @@ func (repo *metadataRepository) DeleteAndReturnExpiredKeys() ([]string, error) {
 	return keys, err
 }
 
-func (repo *metadataRepository) DeletePasteByKey(key string) error {
+func (repo *MetadataRepo) DeletePasteByKey(key string) error {
 	query := `  DELETE FROM metadata WHERE key = $1`
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
 	defer cancel()
@@ -55,6 +55,6 @@ func (repo *metadataRepository) DeletePasteByKey(key string) error {
 	return nil
 }
 
-func (repo *metadataRepository) IsKeyValid(v *validator.Validator, key string) {
+func (repo *MetadataRepo) IsKeyValid(v *validator.Validator, key string) {
 	v.Check(len([]rune(key)) != 8, "key", "Provided key must be 8 chars lenth")
 }

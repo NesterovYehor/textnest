@@ -1,3 +1,12 @@
+// @title TextNest API
+// @version 1.0
+// @description This is the API documentation for the TextNest project.
+// @contact.name Your Name
+// @contact.email your.email@example.com
+// @host localhost:8080
+// @BasePath /v1
+// @schemes http https
+
 package main
 
 import (
@@ -49,7 +58,8 @@ func main() {
 	mux.Handle("GET /v1/download", middlewares.Authenticate(handler.DownloadPaste(cfg, appContext)))
 	mux.Handle("GET /v1/download/all", middlewares.Authenticate(handler.DownloadAllPastesOfUser(cfg, appContext)))
 	mux.Handle("GET /v1/update/{key}", middlewares.Authenticate(handler.UpdatePasteHandler(appContext)))
-	mux.Handle("/v1/expire/all", middlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
+	mux.Handle("DELETE /v1/expire/{key}", middlewares.Authenticate(handler.ExpirePasteHandler(appContext)))
+	mux.Handle("DELETE /v1/expire/all", middlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
 	mux.HandleFunc("POST /v1/signup", handler.SignUpHandler(appContext, ctx))
 	mux.HandleFunc("GET /v1/login", handler.LogInHandler(appContext, ctx))
 	mux.Handle("POST /v1/refresh", http.HandlerFunc(handler.RefreshTokens(appContext)))

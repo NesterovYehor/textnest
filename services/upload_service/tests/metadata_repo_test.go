@@ -42,3 +42,29 @@ func TestUploadPaste(t *testing.T) {
 	assert.Equal(t, testData.Title, title, "Metadata title mismatch")
 	assert.Equal(t, testData.UserId, userId, "Metadata user ID mismatch")
 }
+
+func TestUpdatePaste(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	db, cleanup := SetUpPostgres(ctx, t)
+	defer cleanup()
+
+	repo := repository.NewMetadataRepository(db)
+
+	// Insert test data
+	assert.NoError(t, repo.InsertPasteMetadata(ctx, testData))
+
+	// Perform the update
+	newExpiration := time.Now().Add(time.Hour) // Set expiration an hour ahead
+	assert.NoError(t, repo.UpdatePasteMetadata(ctx, newExpiration, testData.Key))
+
+	// Verify the update
+	var expirationDate time.Time
+	err := db.QueryRowContext(ctx, "SELECT expiration_date FROM metadata WHERE key = $1", testData.Key).
+		Scan(&expirationDate)
+	assert.NoError(t, err, "Failed to retrieve updated metadata")
+
+	// Check if the expiration date matches (allowing a small margin)
+	assert.WithinDuration(t, newExpiration, expirationDate, time.Second, "Expiration date mismatch")
+}

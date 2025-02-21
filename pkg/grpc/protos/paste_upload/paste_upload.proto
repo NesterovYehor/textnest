@@ -10,6 +10,7 @@ import "google/protobuf/timestamp.proto";
 service PasteUpload {
     rpc UploadPaste (UploadPasteRequest) returns (UploadPasteResponse);
     rpc UploadUpdates (UploadUpdatesRequest) returns (UploadUpdatesResponse);
+    rpc ExpirePaste(ExpirePasteRequest) returns (ExpirePasteResponse);
     rpc ExpireAllPastesByUserID (ExpireAllPastesByUserIDRequest) returns (ExpireAllPastesByUserIDResponse);
 }
 
@@ -36,6 +37,15 @@ message UploadUpdatesRequest {
 // Update response message
 message UploadUpdatesResponse {
     string upload_url = 1;  // Response message (e.g., "Update successful" or error details)
+}
+
+message ExpirePasteRequest {
+    string key = 1;
+    string user_id = 2;
+}
+
+message ExpirePasteResponse {
+    string message = 1;
 }
 
 
