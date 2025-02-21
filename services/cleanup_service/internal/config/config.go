@@ -15,6 +15,7 @@ type Config struct {
 	BucketName         string             `yaml:"bucket_name"`
 	Kafka              *kafka.KafkaConfig `yaml:"kafka"`
 	DBUrl              string             `yaml:"db_url"`
+	S3Region           string             `yaml:"region"`
 }
 
 // LoadConfig initializes the configuration by loading variables from the .env file and environment.
@@ -26,7 +27,7 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 	}
 	data, err := os.Open(path)
 	if err != nil {
-        return nil, fmt.Errorf("failed to read configuration file: %w, on path: %v", err, path)
+		return nil, fmt.Errorf("failed to read configuration file: %w, on path: %v", err, path)
 	}
 	defer data.Close()
 
@@ -46,7 +47,7 @@ func LoadConfig(ctx context.Context) (*Config, error) {
 	if cfg.Kafka == nil || len(cfg.Kafka.Topics) == 0 || len(cfg.Kafka.Brokers) == 0 {
 		return nil, fmt.Errorf("kafka configuration is incomplete")
 	}
-	if cfg.BucketName == "" {
+	if cfg.BucketName == "" || cfg.S3Region == "" {
 		return nil, fmt.Errorf("S3 configuration is incomplete")
 	}
 

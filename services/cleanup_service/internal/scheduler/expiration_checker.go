@@ -38,6 +38,7 @@ func (s *Checker) Start(ctx context.Context, interval time.Duration) {
 			if err := s.service.ProcessExpirations(ctx); err != nil {
 				s.log.PrintError(ctx, err, nil)
 			}
+			s.log.PrintInfo(ctx, "Processed expiration", nil)
 
 		case <-stopSignal:
 			s.log.PrintInfo(ctx, "Received shutdown signal, stopping scheduler", nil)

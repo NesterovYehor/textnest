@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
@@ -43,7 +44,7 @@ func (repo *MetadataRepository) InsertPasteMetadata(ctx context.Context, data *p
 
 		args := []any{
 			data.Key,
-            data.Title,
+			data.Title,
 			data.UserId,
 			data.ExpirationDate.AsTime(),
 		}
@@ -64,29 +65,33 @@ func (repo *MetadataRepository) InsertPasteMetadata(ctx context.Context, data *p
 
 func (repo *MetadataRepository) UpdatePasteMetadata(ctx context.Context, expirationDate time.Time, key string) error {
 	operation := func(ctx context.Context) (any, error) {
-		// Try to update the metadata
 		query := `
         UPDATE metadata 
         SET expiration_date = $1
         WHERE key = $2
         `
-		args := []any{
-			expirationDate,
-			key,
-		}
-		_, err := repo.DB.ExecContext(ctx, query, args...)
+		res, err := repo.DB.ExecContext(ctx, query, expirationDate, key)
 		if err != nil {
 			return nil, err
+		}
+
+		// Check if the update affected any rows
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("failed to check rows affected: %w", err)
+		}
+		if rowsAffected == 0 {
+			return nil, fmt.Errorf("no paste found with key: %s", key)
 		}
 
 		return nil, nil
 	}
 
-	// Execute the operation with the circuit breaker
 	_, err := repo.breaker.Execute(ctx, operation)
 	if err != nil {
-		return err
+		return fmt.Errorf("circuit breaker execution failed: %w", err)
 	}
+
 	return nil
 }
 

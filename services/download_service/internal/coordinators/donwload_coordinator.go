@@ -3,7 +3,6 @@ package coordinators
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"sync"
 
 	"github.com/NesterovYehor/TextNest/pkg/kafka"
@@ -63,8 +62,6 @@ func (coord *DownloadCoordinator) DownloadByKey(ctx context.Context, req *pb.Dow
 	go func() {
 		defer wg.Done()
 		metadata, err := coord.fetchMetadataService.FetchMetadataByKey(ctx, req.Key)
-		coord.logger.PrintInfo(ctx, fmt.Sprintf("Title: %v", metadata.Title), nil)
-		coord.logger.PrintInfo(ctx, fmt.Sprintf("Metadata: %v", metadata), nil)
 		if err != nil {
 			errors <- err
 			return

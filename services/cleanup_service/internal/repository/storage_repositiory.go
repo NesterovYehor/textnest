@@ -12,13 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-type s3Repository struct {
-	S3 *s3.Client
+type StorageRepo struct {
+	bucketName string
+	client         *s3.Client
 }
 
-func newS3Storage() (StorageRepository, error) {
-	// Load AWS configuration with specified region
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func NewStorageRepo(region, bucket string) (*StorageRepo, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
@@ -26,28 +26,29 @@ func newS3Storage() (StorageRepository, error) {
 	// Initialize the S3 client
 	s3Client := s3.NewFromConfig(cfg)
 
-	return &s3Repository{
-		S3: s3Client,
+	return &StorageRepo{
+		client:         s3Client,
+		bucketName: bucket,
 	}, nil
 }
 
-func (storage *s3Repository) DeletePasteContentByKey(key string, bucket string) error {
+func (storage *StorageRepo) DeletePasteContentByKey(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	_, err := storage.S3.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(bucket),
+	_, err := storage.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(storage.bucketName),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.Printf("Failed to delete object %v:%v. Error: %v\n", bucket, key, err)
+		log.Printf("Failed to delete object %v:%v. Error: %v\n", storage.bucketName, key, err)
 		return err
 	}
 
 	return nil
 }
 
-func (storage *s3Repository) DeleteExpiredPastes(keys []string, bucket string) error {
+func (storage *StorageRepo) DeleteExpiredPastes(keys []string) error {
 	if len(keys) == 0 {
 		log.Println("No keys provided for deletion.")
 		return nil
@@ -63,15 +64,15 @@ func (storage *s3Repository) DeleteExpiredPastes(keys []string, bucket string) e
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	output, err := storage.S3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(bucket),
+	output, err := storage.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(storage.bucketName),
 		Delete: &types.Delete{
 			Objects: objects,
 			Quiet:   aws.Bool(true),
 		},
 	})
 	if err != nil {
-		log.Printf("Failed to delete objects from bucket %s. Error: %v", bucket, err)
+		log.Printf("Failed to delete objects from bucket %s. Error: %v", storage.bucketName, err)
 		return err
 	}
 

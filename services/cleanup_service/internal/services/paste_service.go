@@ -8,16 +8,14 @@ import (
 )
 
 type PasteService struct {
-	metadataRepo repository.MetadataRepository
-	storageRepo  repository.StorageRepository
-	bucketName   string
+	metadataRepo *repository.MetadataRepo
+	storageRepo  *repository.StorageRepo
 }
 
-func NewPasteService(metadataRepo repository.MetadataRepository, storageRepo repository.StorageRepository, bucketName string) *PasteService {
+func NewPasteService(metadataRepo *repository.MetadataRepo, storageRepo *repository.StorageRepo) *PasteService {
 	return &PasteService{
 		metadataRepo: metadataRepo,
 		storageRepo:  storageRepo,
-		bucketName:   bucketName,
 	}
 }
 
@@ -30,7 +28,7 @@ func (service *PasteService) DeletePasteByKey(ctx context.Context, key string) e
 		return fmt.Errorf("failed to delete metadata: %w", err)
 	}
 
-	if err := service.storageRepo.DeletePasteContentByKey(key, service.bucketName); err != nil {
+	if err := service.storageRepo.DeletePasteContentByKey(key); err != nil {
 		return fmt.Errorf("failed to delete paste from storage: %w", err)
 	}
 

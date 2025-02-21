@@ -105,6 +105,22 @@ func (uc *UploadCoordinator) UploadUpdates(ctx context.Context, req *pb.UploadUp
 	return &pb.UploadUpdatesResponse{UploadUrl: url}, nil
 }
 
+func (uc *UploadCoordinator) ExpirePaste(ctx context.Context, req *pb.ExpirePasteRequest) (*pb.ExpirePasteResponse, error) {
+	userId, err := uc.metadataService.GetPasteOwner(ctx, req.Key)
+	if err != nil {
+		return nil, err
+	}
+	if userId != req.UserId {
+		uc.log.PrintInfo(ctx, fmt.Sprintf("Provided userID: %v || Needed userID:%v", req.UserId, userId), nil)
+		return nil, status.Error(codes.PermissionDenied, "User is not denaied to expire this paste:%v")
+	}
+	err = uc.metadataService.ExpireMetadata(ctx, req.Key)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Expire paste failed:%v")
+	}
+	return &pb.ExpirePasteResponse{Message: fmt.Sprintf("Paste %v is expired successfully", req.Key)}, nil
+}
+
 func (uc *UploadCoordinator) ExpireAllPastesByUserID(ctx context.Context, req *pb.ExpireAllPastesByUserIDRequest) (*pb.ExpireAllPastesByUserIDResponse, error) {
 	if err := uc.metadataService.ExpireAllPastes(ctx, req.UserId); err != nil {
 		return nil, err

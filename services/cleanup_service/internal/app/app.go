@@ -75,27 +75,20 @@ func NewApp(ctx context.Context) (*App, func(), error) {
 			cleanup = func() {}
 			return
 		}
-
-		factory := repository.NewRepositoryFactory(db)
-		metadataRepo := factory.CreateMetadataRepository()
-		storageRepo, err := factory.CreateStorageRepository()
+		metadataRepo := repository.NewMetadataRepo(db)
+		storageRepo, err := repository.NewStorageRepo(cfg.S3Region, cfg.BucketName)
 		if err != nil {
-			initError = err // Store the error
-			logFile.Close()
-			db.Close()
-			kafkaProducer.Close()
-			cleanup = func() {}
+			logger.PrintFatal(ctx, err, nil)
 			return
 		}
 
-		pasteService := services.NewPasteService(metadataRepo, storageRepo, cfg.BucketName)
+		pasteService := services.NewPasteService(metadataRepo, storageRepo)
 		expiredPasteHandler := handlers.NewExpiredPasteHandler(pasteService)
 
 		expirationService := services.NewExpirationService(
 			metadataRepo,
 			storageRepo,
 			kafkaProducer,
-			cfg.BucketName,
 		)
 
 		scheduler := scheduler.NewChecker(expirationService, logger)
