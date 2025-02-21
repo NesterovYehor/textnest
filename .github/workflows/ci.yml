@@ -54,4 +54,3 @@ jobs:
           # Optionally stop the container after tests
           docker stop testcontainer
           docker rm testcontainer
-
