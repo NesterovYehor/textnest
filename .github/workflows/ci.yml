@@ -10,13 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:19.03.12
-        options: --privileged
-        ports:
-          - 2375:2375
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,32 +19,14 @@ jobs:
         with:
           go-version: 1.21
 
-      - name: Set up Docker
-        uses: docker/setup-docker@v2
-        with:
-          version: 'latest'
-
       - name: Install dependencies & test (download_service 1)
         working-directory: services/download_service
         run: |
           go mod tidy
-          # Start the required test containers (if any)
-          docker run -d --name testcontainer my-test-image
-          # Run tests
           go test ./tests
-          # Optionally stop the container after tests
-          docker stop testcontainer
-          docker rm testcontainer
 
       - name: Install dependencies & test (upload_service 2)
         working-directory: services/upload_service
         run: |
           go mod tidy
-          # Start the required test containers (if any)
-          docker run -d --name testcontainer my-test-image
-          # Run tests
           go test ./tests
-          # Optionally stop the container after tests
-          docker stop testcontainer
-          docker rm testcontainer
-
