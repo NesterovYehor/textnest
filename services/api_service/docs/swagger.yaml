@@ -1,0 +1,237 @@
+basePath: /v1
+definitions:
+  handler.DownloadPasteRequest:
+    description: Retrieves a paste's metadata and download URL by its key
+    properties:
+      key:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: your.email@example.com
+    name: Your Name
+  description: This is the API documentation for the TextNest project.
+  title: TextNest API
+  version: "1.0"
+paths:
+  /expire_all:
+    delete:
+      consumes:
+      - application/json
+      description: Expire all pastes associated with the authenticated user. Requires
+        user authentication.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paste expired successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Expire all pastes of a user
+      tags:
+      - paste
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Log in to the application using email and password to receive an
+        access token and refresh token.
+      parameters:
+      - description: User Email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: User Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens and expiration
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log in to the application
+      tags:
+      - auth
+  /paste/download:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves a paste's metadata and download URL by its key
+      parameters:
+      - description: Paste Key
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.DownloadPasteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download a paste
+      tags:
+      - paste
+  /pastes:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of pastes for the currently authenticated user
+      parameters:
+      - description: 'Limit the number of results (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with pastes
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all pastes for a user
+      tags:
+      - paste
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Use the refresh token to get a new access token and refresh token.
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: refresh_token
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New Tokens and expiration
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh the access token using the refresh token
+      tags:
+      - auth
+  /update/{key}:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing paste based on the key provided
+      parameters:
+      - description: Paste Key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated Paste URL
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a paste
+      tags:
+      - pastes
+schemes:
+- http
+- https
+swagger: "2.0"

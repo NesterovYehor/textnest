@@ -12,6 +12,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// UploadPasteHandler godoc
+// @Summary Upload a paste
+// @Description Upload a paste with title and expiration date
+// @Tags pastes
+// @Accept json
+// @Produce json
+// @Param paste body validation.PasteInput true "Paste Input"
+// @Success 200 {object} map[string]interface{} "Upload URL and Key"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /upload [post]
+
 func UploadPasteHandler(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -70,6 +82,17 @@ func UploadPasteHandler(app *app.AppContext) http.HandlerFunc {
 	}
 }
 
+// UpdatePasteHandler godoc
+// @Summary Update a paste
+// @Description Update an existing paste based on the key provided
+// @Tags pastes
+// @Accept json
+// @Produce json
+// @Param key path string true "Paste Key"
+// @Success 200 {object} map[string]interface{} "Updated Paste URL"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /update/{key} [put]
 func UpdatePasteHandler(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -94,30 +117,6 @@ func UpdatePasteHandler(app *app.AppContext) http.HandlerFunc {
 		}
 
 		response := helpers.Envelope{"update_url": updateRes}
-		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
-			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
-			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))
-		}
-	}
-}
-
-func ExpireAllUserPastesHandler(app *app.AppContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		userId, ok := ctx.Value("user_id").(string)
-		if !ok {
-			app.Logger.PrintError(ctx, fmt.Errorf("Authorization failed: user_id missing"), nil)
-			errors.ServerErrorResponse(w, fmt.Errorf("Authorization failed"))
-			return
-		}
-		res, err := app.UploadClient.ExpireAllUserPastes(ctx, userId)
-		if err != nil {
-			app.Logger.PrintError(ctx, fmt.Errorf("Expiring paste failed: %v", err), nil)
-			errors.ServerErrorResponse(w, err)
-			return
-		}
-		response := helpers.Envelope{"message": res}
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			app.Logger.PrintError(ctx, fmt.Errorf("error writing JSON response: %w", err), nil)
 			errors.ServerErrorResponse(w, fmt.Errorf("internal error while sending response"))

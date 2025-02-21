@@ -9,6 +9,18 @@ import (
 	"github.com/NesterovYehor/TextNest/services/api_service/internal/app"
 )
 
+// SignUpHandler godoc
+// @Summary Sign up a new user
+// @Description Sign up a new user by providing their name, email, and password.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param name body string true "User Name"
+// @Param email body string true "User Email"
+// @Param password body string true "User Password"
+// @Success 200 {string} string "User created"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
 func SignUpHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
@@ -35,6 +47,18 @@ func SignUpHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// LogInHandler godoc
+// @Summary Log in to the application
+// @Description Log in to the application using email and password to receive an access token and refresh token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param email body string true "User Email"
+// @Param password body string true "User Password"
+// @Success 200 {object} map[string]interface{} "Tokens and expiration"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /login [post]
 func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
@@ -66,6 +90,17 @@ func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// RefreshTokens godoc
+// @Summary Refresh the access token using the refresh token
+// @Description Use the refresh token to get a new access token and refresh token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param refresh_token body string true "Refresh Token"
+// @Success 200 {object} map[string]interface{} "New Tokens and expiration"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /refresh [post]
 func RefreshTokens(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

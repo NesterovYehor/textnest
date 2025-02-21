@@ -36,6 +36,14 @@ func (c *UploadClient) UploadPaste(ctx context.Context, req *paste_upload.Upload
 	return resp.UploadUrl, nil
 }
 
+func (c *UploadClient) ExpirePaste(ctx context.Context, key, userID string) (string, error) {
+	resp, err := c.client.ExpirePaste(ctx, &paste_upload.ExpirePasteRequest{Key: key, UserId: userID})
+	if err != nil {
+		return "", err
+	}
+	return resp.Message, nil
+}
+
 // Upload method calls the gRPC Upload RPC
 func (c *UploadClient) ExpireAllUserPastes(ctx context.Context, userId string) (string, error) {
 	resp, err := c.client.ExpireAllPastesByUserID(ctx, &paste_upload.ExpireAllPastesByUserIDRequest{
