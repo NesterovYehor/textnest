@@ -27,9 +27,10 @@ jobs:
           go-version: 1.21
 
       - name: Set up Docker
-        uses: docker/setup-docker@v2
+        uses: docker/build-push-action@v3
         with:
-          version: 'latest'
+          push: false
+          tags: my-docker-image
 
       - name: Install dependencies & test (download_service 1)
         working-directory: services/download_service
