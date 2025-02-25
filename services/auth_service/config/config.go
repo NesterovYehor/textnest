@@ -2,108 +2,97 @@ package config
 
 import (
 	"errors"
-	"os"
 	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 )
 
 type JwtConfig struct {
-	AccessSecret  string
-	RefreshSecret string
-	AccessExpiry  time.Duration
-	RefreshExpiry time.Duration
-	SigningMethod jwt.SigningMethod
+	AccessSecret     string        `mapstructure:"access_secret"`
+	RefreshSecret    string        `mapstructure:"refresh_secret"`
+	ActivateSecret   string        `mapstructure:"activate_secret"`
+	AccessExpiry     time.Duration `mapstructure:"access_expiry"`
+	RefreshExpiry    time.Duration `mapstructure:"refresh_expiry"`
+	ActivateExpiry   time.Duration `mapstructure:"activate_expiry"`
+	SigningMethod    jwt.SigningMethod
+	SigningMethodStr string `mapstructure:"signing_method"` // Temporary field to store the raw string
+}
+
+type MailerConfig struct {
+	Host     string `mapstructure:"host"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Sender   string `mapstructure:"sender"`
+	Port     int    `mapstructure:"port"`
 }
 
 type Config struct {
-	DBUrl     string
-	Grpc      *grpc.GrpcConfig
-	JwtConfig *JwtConfig
+	DBUrl     string           `mapstructure:"db_url"`
+	Grpc      *grpc.GrpcConfig `mapstructure:"grpc"`
+	JwtConfig *JwtConfig       `mapstructure:"jwt"`
+	Mailer    *MailerConfig    `mapstructure:"mailer"`
 }
 
+// LoadConfig reads the configuration from the config.yaml file and unmarshals it into the Config struct.
 func LoadConfig(log *jsonlog.Logger) (*Config, error) {
-	// Database URL
-	dbUrl := os.Getenv("DB_URL")
-	if dbUrl == "" {
+	// Initialize Viper
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/app") // Look in the /app directory inside the container
+
+	// Read the config file
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+
+	// Unmarshal config
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		return nil, err
+	}
+
+	// Validate required fields
+	if config.DBUrl == "" {
 		return nil, errors.New("database URL is not provided")
 	}
-
-	// gRPC Port
-	grpcPort := os.Getenv("GRPC_PORT")
-	if grpcPort == "" {
-		return nil, errors.New("gRPC port is not provided")
+	if config.JwtConfig.AccessSecret == "" || config.JwtConfig.RefreshSecret == "" {
+		return nil, errors.New("JWT secrets are not provided")
 	}
 
-	// JWT Secrets
-	accessSecret := os.Getenv("ACCESS_SECRET")
-	if accessSecret == "" {
-		return nil, errors.New("access secret is not provided")
-	}
-
-	refreshSecret := os.Getenv("REFRESH_SECRET")
-	if refreshSecret == "" {
-		return nil, errors.New("refresh secret is not provided")
-	}
-
-	// JWT Expiries
-	accessExpiry, err := parseDurationFromEnv("ACCESS_EXPIRY", 15*time.Minute)
+	// Convert signing method from string
+	signingMethod, err := getSigningMethod(config.JwtConfig.SigningMethodStr)
 	if err != nil {
 		return nil, err
 	}
+	config.JwtConfig.SigningMethod = signingMethod
 
-	refreshExpiry, err := parseDurationFromEnv("REFRESH_EXPIRY", 7*24*time.Hour)
-	if err != nil {
-		return nil, err
-	}
-	signinMethod, err := getSigningMethodFromEnv()
-	if err != nil {
-		return nil, err
-	}
-
-	// Return the configuration
-	return &Config{
-		DBUrl: dbUrl,
-		Grpc:  &grpc.GrpcConfig{Port: grpcPort},
-		JwtConfig: &JwtConfig{
-			AccessSecret:  accessSecret,
-			RefreshSecret: refreshSecret,
-			AccessExpiry:  accessExpiry,
-			RefreshExpiry: refreshExpiry,
-			SigningMethod: signinMethod,
-		},
-	}, nil
+	return &config, nil
 }
 
-// Helper function to parse durations from environment variables
-func parseDurationFromEnv(envVar string, defaultValue time.Duration) (time.Duration, error) {
-	value := os.Getenv(envVar)
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	duration, err := time.ParseDuration(value)
-	if err != nil {
-		return 0, errors.New(envVar + " has an invalid duration format")
-	}
-
-	return duration, nil
-}
-
-func getSigningMethodFromEnv() (jwt.SigningMethod, error) {
-	algorithm := os.Getenv("JWT_SIGNING_ALGORITHM")
+func getSigningMethod(algorithm string) (jwt.SigningMethod, error) {
 	if algorithm == "" {
-		return nil, errors.New("JWT_SIGNING_ALGORITHM is not set")
+		return nil, errors.New("JWT signing method is not set")
 	}
 
 	switch algorithm {
 	case "HS256":
 		return jwt.SigningMethodHS256, nil
+	case "HS384":
+		return jwt.SigningMethodHS384, nil
+	case "HS512":
+		return jwt.SigningMethodHS512, nil
 	case "RS256":
 		return jwt.SigningMethodRS256, nil
+	case "RS384":
+		return jwt.SigningMethodRS384, nil
+	case "RS512":
+		return jwt.SigningMethodRS512, nil
+	case "ES256":
+		return jwt.SigningMethodES256, nil
 	default:
-		return nil, errors.New("unsupported signing algorithm")
+		return nil, errors.New("unsupported signing algorithm: " + algorithm)
 	}
 }

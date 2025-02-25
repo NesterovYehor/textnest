@@ -12,7 +12,8 @@ import (
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	pb "github.com/NesterovYehor/textnest/services/auth_service/api"
 	"github.com/NesterovYehor/textnest/services/auth_service/config"
-	"github.com/NesterovYehor/textnest/services/auth_service/internal/controlers"
+	controllers "github.com/NesterovYehor/textnest/services/auth_service/internal/controlers"
+	"github.com/NesterovYehor/textnest/services/auth_service/internal/mailer"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/models"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/services"
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -40,9 +41,11 @@ func main() {
 	}
 
 	userModel := models.NewUserModel(db)
+	tokenModel := models.NewTokenModel(db)
 	userSrv := services.NewUserService(userModel)
-	tokenSrv := services.NewJwtService(cfg.JwtConfig)
-	controler := controlers.NewAuthControler(logger, userSrv, tokenSrv)
+	tokenSrv := services.NewTokenService(cfg.JwtConfig, tokenModel)
+	mailer := mailer.NewMailer(cfg.Mailer)
+	controler := controllers.NewAuthController(logger, userSrv, tokenSrv, mailer)
 
 	server := grpc.NewGrpcServer(cfg.Grpc)
 	pb.RegisterAuthServiceServer(server.Grpc, controler)
