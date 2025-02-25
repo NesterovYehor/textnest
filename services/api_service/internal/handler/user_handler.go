@@ -131,3 +131,86 @@ func RefreshTokens(app *app.AppContext) http.HandlerFunc {
 		}
 	}
 }
+
+// ActivateUser godoc
+// @Summary Activate a user account
+// @Description This endpoint allows a user to activate their account using the provided JWT token.
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param token path string true "JWT token for user activation"
+// @Success 202 {object} map[string]string "User activated successfully"
+// @Failure 400 {object} map[string]string "Invalid token"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /activate/{token} [post]
+func ActivateUser(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		token := r.PathValue("id")
+		message, err := app.AuthClient.ActivateUser(token)
+		if err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{
+			"message": message,
+		}
+		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
+			errors.ServerErrorResponse(w, err)
+		}
+	}
+}
+
+func SendPasswordResetEmail(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var input struct {
+			Email string `json:"email"`
+		}
+		if err := helpers.ReadJSON(w, r, &input); err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, err)
+			return
+		}
+		message, err := app.AuthClient.SendPasswordResetToken(input.Email)
+		if err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{
+			"message": message,
+		}
+		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
+			errors.ServerErrorResponse(w, err)
+		}
+	}
+}
+
+func ResetPassword(app *app.AppContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		token := r.PathValue("token")
+		var input struct {
+			Password string `json:"password"`
+		}
+		if err := helpers.ReadJSON(w, r, &input); err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.BadRequestResponse(w, http.StatusBadRequest, err)
+			return
+		}
+		message, err := app.AuthClient.ResetPassword(input.Password, token)
+		if err != nil {
+			app.Logger.PrintError(ctx, err, nil)
+			errors.ServerErrorResponse(w, err)
+			return
+		}
+		response := helpers.Envelope{
+			"message": message,
+		}
+		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
+			errors.ServerErrorResponse(w, err)
+		}
+	}
+}

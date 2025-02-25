@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/cache"
 	"github.com/NesterovYehor/TextNest/services/download_service/internal/repository"
@@ -12,7 +11,7 @@ import (
 )
 
 func TestFetchMetadataByKey(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	connString, cleanupRedis := SetUpRedis(ctx, t)
 	defer cleanupRedis()

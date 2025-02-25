@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/NesterovYehor/TextNest/pkg/validator"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/models"
@@ -48,8 +49,8 @@ func ValidateUser(user *models.User) error {
 		return err
 	}
 
-	if user.Password.Plaintext != nil {
-		return ValidatePasswordPlaintext(*user.Password.Plaintext)
+	if user.Password.Plaintext != "" {
+		return ValidatePasswordPlaintext(user.Password.Plaintext)
 	}
 
 	if user.Password.Hash == nil {
@@ -80,4 +81,14 @@ func ValidateJwtToken(tokenString, secret, expectedType string) (*jwt.Token, err
 	}
 
 	return token, nil
+}
+
+func ValidatePasswordResetToken(token *models.Token) error {
+	if token.Expiry.Before(time.Now()) {
+		return errors.New("Token is expired")
+	}
+	if token.Hash == "" {
+		return errors.New("Token hash is empty")
+	}
+	return nil
 }

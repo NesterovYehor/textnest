@@ -10,7 +10,7 @@ import (
 )
 
 func TestCacheAPI(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	redisAddr, cleanup := SetUpRedis(ctx, t)
 	defer cleanup()

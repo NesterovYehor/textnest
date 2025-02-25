@@ -72,7 +72,7 @@ func TestValidateUser(t *testing.T) {
 
 	// User with no password
 	user.Email = validEmail
-	user.Password.Plaintext = nil
+	user.Password.Plaintext = ""
 	user.Password.Hash = nil
 	err = validation.ValidateUser(user)
 	assert.EqualError(t, err, "password hash is missing", "User with no password hash should return the correct error message")

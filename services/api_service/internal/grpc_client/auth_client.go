@@ -86,3 +86,37 @@ func (c *AuthClient) RefreshTokens(token string) (*auth.RefreshTokensResponse, e
 	}
 	return res, nil
 }
+
+func (c *AuthClient) ActivateUser(userID string) (string, error) {
+	req := auth.ActivateUserRequest{
+		UserId: userID,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	res, err := c.client.ActivateUser(ctx, &req)
+	if err != nil {
+		return "", err
+	}
+	return res.Message, nil
+}
+
+func (c *AuthClient) SendPasswordResetToken(email string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	res, err := c.client.SendPasswordResetToken(ctx, &auth.SendPasswordResetTokenRequest{Email: email})
+	if err != nil {
+		return "", err
+	}
+	return res.Message, nil
+}
+
+func (c *AuthClient) ResetPassword(password, token string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	res, err := c.client.ResetPassword(ctx, &auth.ResetPasswordRequest{Password: password, Token: token})
+	if err != nil {
+		return "", err
+	}
+	return res.Message, nil
+}

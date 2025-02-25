@@ -28,7 +28,7 @@ func TestPassword_Set(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, p.Hash)
-				assert.Equal(t, tt.plaintext, *p.Plaintext)
+				assert.Equal(t, tt.plaintext, p.Plaintext)
 
 				// Optional: Verify the hash matches the plaintext
 				err = bcrypt.CompareHashAndPassword(p.Hash, []byte(tt.plaintext))

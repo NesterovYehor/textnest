@@ -30,7 +30,20 @@ message CreateUserRequest {
     string password = 3;
 }
 
-message CreateUserResponse {}
+message CreateUserResponse {
+    string token = 1;
+}
+
+// --------------------------
+// ActivateUser
+// --------------------------
+message ActivateUserRequest {
+    string user_id = 1;
+}
+
+message ActivateUserResponse {
+    string message = 1;
+}
 
 // --------------------------
 // AuthenticateUser
@@ -77,11 +90,38 @@ message RefreshTokensResponse {
 
 
 // --------------------------
+// Create Reset Password Token
+// --------------------------
+message SendPasswordResetTokenRequest{
+    string email = 1;
+}
+
+message SendPasswordResetTokenResponse{
+    string message = 1;
+    
+}
+
+// --------------------------
+// Reset Password 
+// --------------------------
+message ResetPasswordRequest{
+    string token = 1;
+    string password = 2;
+}
+
+message ResetPasswordResponse{
+    string message = 1;
+}
+
+// --------------------------
 // Service
 // --------------------------
 service AuthService {
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    rpc ActivateUser(ActivateUserRequest) returns (ActivateUserResponse);
     rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
     rpc AuthorizeUser(AuthorizeUserRequest) returns (AuthorizeUserResponse);
     rpc RefreshTokens(RefreshTokensRequest) returns (RefreshTokensResponse);
+    rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+    rpc SendPasswordResetToken(SendPasswordResetTokenRequest) returns (SendPasswordResetTokenResponse);
 }
