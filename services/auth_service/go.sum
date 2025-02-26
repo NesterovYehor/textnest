@@ -8,6 +8,8 @@ github.com/NesterovYehor/TextNest/pkg v0.0.0-20250125142451-8f481a7f4bf8 h1:iRMb
 github.com/NesterovYehor/TextNest/pkg v0.0.0-20250125142451-8f481a7f4bf8/go.mod h1:dbBQwExcuTS3LvatSiJ0fi0e23+UyFZUpcHaBd1nrkU=
 github.com/NesterovYehor/TextNest/pkg v0.0.0-20250125190438-537cf4afa181 h1:+5spTduLaCjOfIms273E5NMyQbG4lcSSjE/CBZYBvlM=
 github.com/NesterovYehor/TextNest/pkg v0.0.0-20250125190438-537cf4afa181/go.mod h1:dbBQwExcuTS3LvatSiJ0fi0e23+UyFZUpcHaBd1nrkU=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20250225023325-3c77dde1f5d6 h1:CcCceB57lI2v1yXeXq7qjVmSDzzWnrr05gx/fSscGj4=
+github.com/NesterovYehor/TextNest/pkg v0.0.0-20250225023325-3c77dde1f5d6/go.mod h1:dbBQwExcuTS3LvatSiJ0fi0e23+UyFZUpcHaBd1nrkU=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/containerd/containerd v1.7.18 h1:jqjZTQNfXGoEaZdW1WwPU0RqSn1Bm2Ay/KJPUuO8nao=
@@ -108,6 +110,8 @@ github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg
 github.com/shoenig/test v0.6.4/go.mod h1:byHiCGXqrVaflBLAMq/srcZIHynQPQgeyvkvXnjqq0k=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
+github.com/sony/gobreaker v1.0.0 h1:feX5fGGXSl3dYd4aHZItw+FpHLvvoaqkawKjVNiFMNQ=
+github.com/sony/gobreaker v1.0.0/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/spf13/afero v1.11.0 h1:WJQKhtpdm3v2IzqG8VMqrr6Rf3UYpEF239Jy9wNepM8=

@@ -50,6 +50,9 @@ func (srv *UserService) AuthenticateUserByEmail(email, passwordPlaintext string)
 	if err != nil {
 		return "", srv.handleErr(err)
 	}
+    if !user.Activated{
+        return "", errors.New("User is not activated")
+    }
 
 	if !matches {
 		return "", errors.New("invalid credentials")

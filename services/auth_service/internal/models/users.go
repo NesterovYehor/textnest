@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -64,13 +65,12 @@ func (model *UserModel) Insert(user *User) (string, error) {
 	defer cancel()
 
 	err := model.db.QueryRowContext(ctx, query, args...).Scan(&user.ID)
-	if err != nil {
-		if err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"` {
+
+	if pqErr, ok := err.(*pq.Error); ok {
+		if pqErr.Code == "23505" { // Unique violation code
 			return "", ErrDuplicateEmail
 		}
-		return "", fmt.Errorf("%w: %v", ErrInsertFailed, err)
 	}
-
 	return user.ID.String(), nil
 }
 

@@ -29,8 +29,15 @@ type MailerConfig struct {
 	Port     int    `mapstructure:"port"`
 }
 
+type DBConfig struct {
+	Link            string        `mapstructure:"link"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+}
+
 type Config struct {
-	DBUrl     string           `mapstructure:"db_url"`
+	DB        *DBConfig        `mapstructure:"db"`
 	Grpc      *grpc.GrpcConfig `mapstructure:"grpc"`
 	JwtConfig *JwtConfig       `mapstructure:"jwt"`
 	Mailer    *MailerConfig    `mapstructure:"mailer"`
@@ -55,11 +62,17 @@ func LoadConfig(log *jsonlog.Logger) (*Config, error) {
 	}
 
 	// Validate required fields
-	if config.DBUrl == "" {
-		return nil, errors.New("database URL is not provided")
+	if config.DB.Link == "" {
+		return nil, errors.New("No link to database provided")
 	}
-	if config.JwtConfig.AccessSecret == "" || config.JwtConfig.RefreshSecret == "" {
-		return nil, errors.New("JWT secrets are not provided")
+	if config.DB.MaxIdleConns == 0 {
+		config.DB.MaxIdleConns = 25
+	}
+	if config.DB.MaxOpenConns == 0 {
+		config.DB.MaxIdleConns = 25
+	}
+	if config.DB.ConnMaxLifetime == 0 {
+		config.DB.ConnMaxLifetime = time.Minute * 5
 	}
 
 	// Convert signing method from string
@@ -90,6 +103,7 @@ func getSigningMethod(algorithm string) (jwt.SigningMethod, error) {
 		return jwt.SigningMethodRS384, nil
 	case "RS512":
 		return jwt.SigningMethodRS512, nil
+
 	case "ES256":
 		return jwt.SigningMethodES256, nil
 	default:

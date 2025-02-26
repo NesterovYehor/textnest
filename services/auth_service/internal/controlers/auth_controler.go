@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	auth "github.com/NesterovYehor/textnest/services/auth_service/api"
@@ -40,48 +39,42 @@ func NewAuthController(log *jsonlog.Logger, userService *services.UserService, t
 func (ctr *AuthController) CreateUser(ctx context.Context, req *auth.CreateUserRequest) (*auth.CreateUserResponse, error) {
 	userID, err := ctr.userSrv.CreateNewUser(req.Name, req.Email, req.Password)
 	if err != nil {
-        return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to create new user: %v", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.Internal, "Failed to create new user: %v")
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		if err = ctr.mailer.Send(req.Email, "user_welcome.tmpl", map[string]string{
 			"userID": userID,
 		}); err != nil {
 			ctr.log.PrintError(ctx, err, nil)
 		}
 	}()
-	wg.Wait()
-
 	return &auth.CreateUserResponse{}, nil
 }
 
 func (ctr *AuthController) ActivateUser(ctx context.Context, req *auth.ActivateUserRequest) (*auth.ActivateUserResponse, error) {
-	// Attempt to activate the user
 	if err := ctr.userSrv.ActivateUser(req.UserId); err != nil {
-		return nil, status.Error(status.Code(err), "User activation failed. Please verify the user ID and try again.")
+		return nil, status.Error(status.Code(err), fmt.Sprintf("User activation failed: %v. Please verify the user ID and try again.", err))
 	}
 
-	// Successfully activated the user
 	return &auth.ActivateUserResponse{Message: "User has been successfully activated."}, nil
 }
 
 func (ctr *AuthController) AuthenticateUser(ctx context.Context, req *auth.AuthenticateUserRequest) (*auth.AuthenticateUserResponse, error) {
 	userId, err := ctr.userSrv.AuthenticateUserByEmail(req.Email, req.Password)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "Authentication failed. Check your credentials and try again.")
+		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("Authentication failed: %v. Check your credentials and try again.", err))
 	}
 
 	accessToken, expiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, accessType)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to generate access token. Please try again.")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate access token: %v.", err))
 	}
 
 	refreshToken, refreshExpiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, refreshType)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to generate refresh token. Please try again.")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate refresh token: %v", err))
 	}
 
 	return &auth.AuthenticateUserResponse{
@@ -156,7 +149,6 @@ func (ctr *AuthController) SendPasswordResetToken(ctx context.Context, req *auth
 }
 
 func (ctr *AuthController) ResetPassword(ctx context.Context, req *auth.ResetPasswordRequest) (*auth.ResetPasswordResponse, error) {
-	var wg sync.WaitGroup
 	if err := ctr.tokenSrv.ValidateResetToken(req.Token); err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Token for reseting password is invalid: %v", err))
 	}
@@ -164,12 +156,10 @@ func (ctr *AuthController) ResetPassword(ctx context.Context, req *auth.ResetPas
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to reset password: %v", err))
 	}
-	wg.Add(1)
 	go func() {
 		if err := ctr.tokenSrv.DeleteAllForUser(*userID); err != nil {
 			ctr.log.PrintError(ctx, err, nil)
 		}
 	}()
-	wg.Wait()
 	return &auth.ResetPasswordResponse{Message: "Password is renewed"}, nil
 }
