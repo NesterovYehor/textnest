@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,10 +12,10 @@ import (
 	pb "github.com/NesterovYehor/textnest/services/auth_service/api"
 	"github.com/NesterovYehor/textnest/services/auth_service/config"
 	controllers "github.com/NesterovYehor/textnest/services/auth_service/internal/controlers"
+	"github.com/NesterovYehor/textnest/services/auth_service/internal/database"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/mailer"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/models"
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/services"
-	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 func main() {
@@ -34,16 +33,16 @@ func main() {
 		return
 	}
 
-	db, err := sql.Open("postgres", cfg.DBUrl)
+	db, err := database.New(cfg.DB)
 	if err != nil {
 		logger.PrintFatal(ctx, err, nil)
 		return
 	}
+	defer db.Close()
+	model := models.New(*db)
 
-	userModel := models.NewUserModel(db)
-	tokenModel := models.NewTokenModel(db)
-	userSrv := services.NewUserService(userModel)
-	tokenSrv := services.NewTokenService(cfg.JwtConfig, tokenModel)
+	userSrv := services.NewUserService(model.User)
+	tokenSrv := services.NewTokenService(cfg.JwtConfig, model.Token)
 	mailer := mailer.NewMailer(cfg.Mailer)
 	controler := controllers.NewAuthController(logger, userSrv, tokenSrv, mailer)
 

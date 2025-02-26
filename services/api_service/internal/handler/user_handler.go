@@ -18,14 +18,15 @@ import (
 // @Param name body string true "User Name"
 // @Param email body string true "User Email"
 // @Param password body string true "User Password"
-// @Success 200 {string} string "User created"
+// @Success 201 {object} map[string]string "User created"
 // @Failure 400 {object} map[string]string "Invalid request body"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Router /signup [post]
 func SignUpHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
 			Name     string `json:"name"`
-			Emain    string `json:"email"`
+			Email    string `json:"email"`
 			Password string `json:"password"`
 		}
 
@@ -35,14 +36,17 @@ func SignUpHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		_, err := app.AuthClient.SignUp(input.Name, input.Emain, input.Password)
+		_, err := app.AuthClient.SignUp(input.Name, input.Email, input.Password)
 		if err != nil {
 			app.Logger.PrintError(ctx, err, nil)
-			errors.BadRequestResponse(w, http.StatusBadRequest, err)
+			errors.ServerErrorResponse(w, err)
+			return
 		}
 
-		if err := helpers.WriteJSON(w, "User created", http.StatusOK, nil); err != nil {
+		response := helpers.Envelope{"message": "User created"}
+		if err := helpers.WriteJSON(w, response, http.StatusCreated, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }
@@ -62,7 +66,7 @@ func SignUpHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
-			Emain    string `json:"email"`
+			Email    string `json:"email"`
 			Password string `json:"password"`
 		}
 
@@ -72,10 +76,11 @@ func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		ress, err := app.AuthClient.LogIn(input.Emain, input.Password)
+		ress, err := app.AuthClient.LogIn(input.Email, input.Password)
 		if err != nil {
 			app.Logger.PrintError(ctx, err, nil)
 			errors.BadRequestResponse(w, http.StatusBadRequest, err)
+			return
 		}
 		response := helpers.Envelope{
 			"access_token":       ress.AccessToken,
@@ -86,6 +91,7 @@ func LogInHandler(app *app.AppContext, ctx context.Context) http.HandlerFunc {
 
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }
@@ -128,6 +134,7 @@ func RefreshTokens(app *app.AppContext) http.HandlerFunc {
 
 		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }
@@ -135,19 +142,19 @@ func RefreshTokens(app *app.AppContext) http.HandlerFunc {
 // ActivateUser godoc
 // @Summary Activate a user account
 // @Description This endpoint allows a user to activate their account using the provided JWT token.
-// @Tags Authentication
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param token path string true "JWT token for user activation"
-// @Success 202 {object} map[string]string "User activated successfully"
+// @Success 200 {object} map[string]string "User activated successfully"
 // @Failure 400 {object} map[string]string "Invalid token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /activate/{token} [post]
 func ActivateUser(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		token := r.PathValue("id")
-		message, err := app.AuthClient.ActivateUser(token)
+		userID := r.PathValue("id")
+		message, err := app.AuthClient.ActivateUser(userID)
 		if err != nil {
 			app.Logger.PrintError(ctx, err, nil)
 			errors.ServerErrorResponse(w, err)
@@ -156,12 +163,24 @@ func ActivateUser(app *app.AppContext) http.HandlerFunc {
 		response := helpers.Envelope{
 			"message": message,
 		}
-		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }
 
+// SendPasswordResetEmail godoc
+// @Summary Send password reset email
+// @Description Sends a password reset email to the user with a reset token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param email body string true "User Email"
+// @Success 202 {object} map[string]string "Password reset email sent"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /send-reset-email [post]
 func SendPasswordResetEmail(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -184,10 +203,23 @@ func SendPasswordResetEmail(app *app.AppContext) http.HandlerFunc {
 		}
 		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }
 
+// ResetPassword godoc
+// @Summary Reset user password
+// @Description Resets the user's password using a valid reset token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param token path string true "Password reset token"
+// @Param password body string true "New Password"
+// @Success 200 {object} map[string]string "Password reset successfully"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /reset-password/{token} [post]
 func ResetPassword(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -209,8 +241,9 @@ func ResetPassword(app *app.AppContext) http.HandlerFunc {
 		response := helpers.Envelope{
 			"message": message,
 		}
-		if err := helpers.WriteJSON(w, response, http.StatusAccepted, nil); err != nil {
+		if err := helpers.WriteJSON(w, response, http.StatusOK, nil); err != nil {
 			errors.ServerErrorResponse(w, err)
+			return
 		}
 	}
 }

@@ -30,8 +30,8 @@ func (t *TokenModel) Insert(token *Token) error {
         INSERT INTO tokens (hash, user_id, expiry) VALUES ($1, $2, $3)
     `
 	args := []any{
-		token.Hash,
-		token.UserID,
+		token.Hash,   
+		token.UserID, 
 		token.Expiry,
 	}
 	_, err := t.db.ExecContext(ctx, query, args...)
