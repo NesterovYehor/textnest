@@ -153,7 +153,7 @@ func RefreshTokens(app *app.AppContext) http.HandlerFunc {
 func ActivateUser(app *app.AppContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		userID := r.PathValue("id")
+		userID := r.PathValue("token")
 		message, err := app.AuthClient.ActivateUser(userID)
 		if err != nil {
 			app.Logger.PrintError(ctx, err, nil)

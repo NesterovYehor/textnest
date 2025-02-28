@@ -1,33 +1,38 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/NesterovYehor/textnest/services/auth_service/config"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DB struct {
-	Conn  *sql.DB
-	Close func() error
+	Pool  *pgxpool.Pool
+	Close func()
 }
 
-func New(cfg *config.DBConfig) (*DB, error) {
-	db, err := sql.Open("postgres", cfg.Link)
+func New(cfg *config.DBConfig, ctx context.Context) (*DB, error) {
+	pgxConfig, err := pgxpool.ParseConfig(cfg.Link)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
 
-	// Ensure database is reachable
-	if err := db.Ping(); err != nil {
-		db.Close()
+	pgxConfig.MaxConns = int32(cfg.MaxOpenConns)
+	pgxConfig.MinConns = int32(cfg.MaxIdleConns)
+	pgxConfig.HealthCheckPeriod = time.Duration(cfg.ConnMaxLifetime) // Adjust if needed
+
+	pool, err := pgxpool.NewWithConfig(ctx, pgxConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database pool: %w", err)
+	}
+
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
-	db.SetMaxOpenConns(cfg.MaxOpenConns) // Corrected here
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-
-	return &DB{Conn: db, Close: db.Close}, nil
+	return &DB{Pool: pool, Close: pool.Close}, nil
 }

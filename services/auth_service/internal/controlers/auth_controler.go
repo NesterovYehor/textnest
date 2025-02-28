@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
 	auth "github.com/NesterovYehor/textnest/services/auth_service/api"
@@ -44,8 +43,9 @@ func (ctr *AuthController) CreateUser(ctx context.Context, req *auth.CreateUserR
 	}
 
 	go func() {
+		token, err := ctr.tokenSrv.GenerateSecureToken(userID)
 		if err = ctr.mailer.Send(req.Email, "user_welcome.tmpl", map[string]string{
-			"userID": userID,
+			"token": token,
 		}); err != nil {
 			ctr.log.PrintError(ctx, err, nil)
 		}
@@ -54,8 +54,9 @@ func (ctr *AuthController) CreateUser(ctx context.Context, req *auth.CreateUserR
 }
 
 func (ctr *AuthController) ActivateUser(ctx context.Context, req *auth.ActivateUserRequest) (*auth.ActivateUserResponse, error) {
-	if err := ctr.userSrv.ActivateUser(req.UserId); err != nil {
-		return nil, status.Error(status.Code(err), fmt.Sprintf("User activation failed: %v. Please verify the user ID and try again.", err))
+	if err := ctr.userSrv.ActivateUser(req.TokenHash); err != nil {
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(status.Code(err), "User activation failed. Please verify the user ID and try again.")
 	}
 
 	return &auth.ActivateUserResponse{Message: "User has been successfully activated."}, nil
@@ -64,17 +65,20 @@ func (ctr *AuthController) ActivateUser(ctx context.Context, req *auth.ActivateU
 func (ctr *AuthController) AuthenticateUser(ctx context.Context, req *auth.AuthenticateUserRequest) (*auth.AuthenticateUserResponse, error) {
 	userId, err := ctr.userSrv.AuthenticateUserByEmail(req.Email, req.Password)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("Authentication failed: %v. Check your credentials and try again.", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.Unauthenticated, "Authentication failed. Check your credentials and try again.")
 	}
 
 	accessToken, expiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, accessType)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate access token: %v.", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.Internal, "Failed to generate access token: %v.")
 	}
 
 	refreshToken, refreshExpiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, refreshType)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate refresh token: %v", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.Internal, "Failed to generate refresh token: %v")
 	}
 
 	return &auth.AuthenticateUserResponse{
@@ -88,11 +92,13 @@ func (ctr *AuthController) AuthenticateUser(ctx context.Context, req *auth.Authe
 func (ctr *AuthController) AuthorizeUser(ctx context.Context, req *auth.AuthorizeUserRequest) (*auth.AuthorizeUserResponse, error) {
 	userId, err := ctr.tokenSrv.ExtractUserID(req.Tocken, accessType)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(status.Code(err), "Failed to extract user ID from the token. Please check the token and try again.")
 	}
 
 	exist, err := ctr.userSrv.UserExists(userId)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.Internal, "Failed to check user existence. Please try again.")
 	}
 	if !exist {
@@ -107,16 +113,19 @@ func (ctr *AuthController) AuthorizeUser(ctx context.Context, req *auth.Authoriz
 func (ctr *AuthController) RefreshTokens(ctx context.Context, req *auth.RefreshTokensRequest) (*auth.RefreshTokensResponse, error) {
 	userId, err := ctr.tokenSrv.ExtractUserID(req.Tocken, refreshType)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.NotFound, "User related to this token was not found. Please ensure the token is valid.")
 	}
 
 	accessToken, expiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, accessType)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.Internal, "Failed to generate access token. Please try again.")
 	}
 
 	refreshToken, refreshExpiresAt, err := ctr.tokenSrv.GenerateJWTToken(userId, refreshType)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.Internal, "Failed to generate refresh token. Please try again.")
 	}
 
@@ -131,9 +140,10 @@ func (ctr *AuthController) RefreshTokens(ctx context.Context, req *auth.RefreshT
 func (ctr *AuthController) SendPasswordResetToken(ctx context.Context, req *auth.SendPasswordResetTokenRequest) (*auth.SendPasswordResetTokenResponse, error) {
 	userID, err := ctr.userSrv.ValidateUserByEmail(req.Email)
 	if err != nil {
+		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.Internal, "User with this email does not exist.")
 	}
-	token, err := ctr.tokenSrv.CreateResetToken(userID)
+	token, err := ctr.tokenSrv.GenerateSecureToken(userID)
 	if err != nil {
 		ctr.log.PrintError(ctx, err, nil)
 		return nil, status.Error(codes.Internal, "Failed to generate reset token.")
@@ -150,11 +160,13 @@ func (ctr *AuthController) SendPasswordResetToken(ctx context.Context, req *auth
 
 func (ctr *AuthController) ResetPassword(ctx context.Context, req *auth.ResetPasswordRequest) (*auth.ResetPasswordResponse, error) {
 	if err := ctr.tokenSrv.ValidateResetToken(req.Token); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Token for reseting password is invalid: %v", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.InvalidArgument, "Token for reseting password is invalid: %v")
 	}
 	userID, err := ctr.userSrv.ResetPassword(req.Password, req.Token)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to reset password: %v", err))
+		ctr.log.PrintError(ctx, err, nil)
+		return nil, status.Error(codes.Internal, "Failed to reset password: %v")
 	}
 	go func() {
 		if err := ctr.tokenSrv.DeleteAllForUser(*userID); err != nil {

@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  test_download_service:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,14 +19,45 @@ jobs:
         with:
           go-version: 1.21
 
-      - name: Install dependencies & test (download_service 1)
+      - name: Install dependencies & test (download_service)
         working-directory: services/download_service
         run: |
           go mod tidy
           go test ./tests
 
-      - name: Install dependencies & test (upload_service 2)
+  test_upload_service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Install dependencies & test (upload_service)
         working-directory: services/upload_service
         run: |
           go mod tidy
           go test ./tests
+
+  test_auth_service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Install dependencies & test (auth_service)
+        working-directory: services/auth_service
+        run: |
+          go mod tidy
+          go test ./tests
+

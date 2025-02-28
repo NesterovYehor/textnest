@@ -38,7 +38,7 @@ message CreateUserResponse {
 // ActivateUser
 // --------------------------
 message ActivateUserRequest {
-    string user_id = 1;
+    string token_hash = 1;
 }
 
 message ActivateUserResponse {

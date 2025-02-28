@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Token struct {
@@ -16,25 +17,25 @@ type Token struct {
 }
 
 type TokenModel struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewTokenModel(db *sql.DB) *TokenModel {
-	return &TokenModel{db: db}
+func NewTokenModel(pool *pgxpool.Pool) *TokenModel {
+	return &TokenModel{pool: pool}
 }
 
-func (t *TokenModel) Insert(token *Token) error {
+func (m *TokenModel) Insert(token *Token) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	query := `
         INSERT INTO tokens (hash, user_id, expiry) VALUES ($1, $2, $3)
     `
 	args := []any{
-		token.Hash,   
-		token.UserID, 
+		token.Hash,
+		token.UserID,
 		token.Expiry,
 	}
-	_, err := t.db.ExecContext(ctx, query, args...)
+	_, err := m.pool.Exec(ctx, query, args...)
 	return err
 }
 
@@ -45,7 +46,7 @@ func (m *TokenModel) DeleteAllForUser(userID uuid.UUID) error {
     `
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := m.db.ExecContext(ctx, query, userID)
+	_, err := m.pool.Exec(ctx, query, userID)
 	return err
 }
 
@@ -56,7 +57,7 @@ func (m *TokenModel) GetToken(tokenHash string) (*Token, error) {
         SELECT user_id, expiry FROM tokens WHERE hash = $1
     `
 	var token Token
-	err := m.db.QueryRowContext(ctx, query, tokenHash).Scan(
+	err := m.pool.QueryRow(ctx, query, tokenHash).Scan(
 		&token.UserID,
 		&token.Expiry,
 	)
