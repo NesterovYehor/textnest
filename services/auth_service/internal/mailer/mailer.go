@@ -11,9 +11,9 @@ import (
 	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/NesterovYehor/textnest/services/auth_service/config"
 	"github.com/go-mail/mail/v2"
-	"github.com/sony/gobreaker"
 )
 
+//go:embed templates/*
 var templateFS embed.FS
 
 type Mailer struct {
@@ -22,20 +22,14 @@ type Mailer struct {
 	breaker *middleware.CircuitBreakerMiddleware
 }
 
-func NewMailer(opts *config.MailerConfig) *Mailer {
-	dialer := mail.NewDialer(opts.Host, opts.Port, opts.Username, opts.Password)
+func NewMailer(cfg *config.Config) *Mailer {
+	dialer := mail.NewDialer(cfg.Mailer.Host, cfg.Mailer.Port, cfg.Mailer.Username, cfg.Mailer.Password)
 	dialer.Timeout = 5 * time.Second
-	cbSettings := gobreaker.Settings{
-		Name:        "MetadataRepo",
-		MaxRequests: 5,
-		Interval:    10 * time.Second,
-		Timeout:     30 * time.Second,
-	}
 
 	return &Mailer{
 		dialer:  dialer,
-		sender:  opts.Sender,
-		breaker: middleware.NewCircuitBreakerMiddleware(cbSettings),
+		sender:  cfg.Mailer.Sender,
+		breaker: middleware.NewCircuitBreakerMiddleware(*cfg.CBConfig, "Mailer"),
 	}
 }
 

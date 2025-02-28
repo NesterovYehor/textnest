@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/NesterovYehor/textnest/services/auth_service/internal/models"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,7 +52,6 @@ func TestInsertUser(t *testing.T) {
 	_, err = userModel.Insert(duplicateUser)
 	assert.Error(t, err)
 	assert.Equal(t, models.ErrDuplicateEmail, err)
-	assert.NoError(t, userModel.ActivateUser(userID))
 }
 
 func TestInsertToken(t *testing.T) {
@@ -92,10 +90,6 @@ func TestInsertToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := uuid.Parse(userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	token.UserID = id
+	token.UserID = *userID
 	assert.NoError(t, tokensModel.Insert(&token))
 }

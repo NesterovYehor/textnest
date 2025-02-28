@@ -6,6 +6,7 @@ import (
 
 	"github.com/NesterovYehor/TextNest/pkg/grpc"
 	jsonlog "github.com/NesterovYehor/TextNest/pkg/logger"
+	middleware "github.com/NesterovYehor/TextNest/pkg/middlewares"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
@@ -17,8 +18,8 @@ type JwtConfig struct {
 	AccessExpiry     time.Duration `mapstructure:"access_expiry"`
 	RefreshExpiry    time.Duration `mapstructure:"refresh_expiry"`
 	ActivateExpiry   time.Duration `mapstructure:"activate_expiry"`
+	SigningMethodStr string        `mapstructure:"signing_method"`
 	SigningMethod    jwt.SigningMethod
-	SigningMethodStr string `mapstructure:"signing_method"` // Temporary field to store the raw string
 }
 
 type MailerConfig struct {
@@ -37,25 +38,24 @@ type DBConfig struct {
 }
 
 type Config struct {
-	DB        *DBConfig        `mapstructure:"db"`
-	Grpc      *grpc.GrpcConfig `mapstructure:"grpc"`
-	JwtConfig *JwtConfig       `mapstructure:"jwt"`
-	Mailer    *MailerConfig    `mapstructure:"mailer"`
+	DB        *DBConfig                        `mapstructure:"db"`
+	Grpc      *grpc.GrpcConfig                 `mapstructure:"grpc"`
+	JwtConfig *JwtConfig                       `mapstructure:"jwt"`
+	Mailer    *MailerConfig                    `mapstructure:"mailer"`
+	CBConfig  *middleware.CircuitBreakerConfig `mapstructure:"circuit_breacker"`
 }
 
-// LoadConfig reads the configuration from the config.yaml file and unmarshals it into the Config struct.
 func LoadConfig(log *jsonlog.Logger) (*Config, error) {
-	// Initialize Viper
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/app") // Look in the /app directory inside the container
+	viper.AddConfigPath("/app") // Ensure this path is correct or adjust if necessary
 
-	// Read the config file
+	// Read configuration file
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
 
-	// Unmarshal config
+	// Unmarshal config into struct
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
@@ -63,19 +63,19 @@ func LoadConfig(log *jsonlog.Logger) (*Config, error) {
 
 	// Validate required fields
 	if config.DB.Link == "" {
-		return nil, errors.New("No link to database provided")
+		return nil, errors.New("no link to database provided")
 	}
 	if config.DB.MaxIdleConns == 0 {
-		config.DB.MaxIdleConns = 25
+		config.DB.MaxIdleConns = 25 // Set default
 	}
 	if config.DB.MaxOpenConns == 0 {
-		config.DB.MaxIdleConns = 25
+		config.DB.MaxOpenConns = 25 // Set default, previously incorrectly set to MaxIdleConns
 	}
 	if config.DB.ConnMaxLifetime == 0 {
-		config.DB.ConnMaxLifetime = time.Minute * 5
+		config.DB.ConnMaxLifetime = time.Minute * 5 // Set default
 	}
 
-	// Convert signing method from string
+	// Convert signing method string to the correct jwt.SigningMethod
 	signingMethod, err := getSigningMethod(config.JwtConfig.SigningMethodStr)
 	if err != nil {
 		return nil, err
@@ -85,6 +85,7 @@ func LoadConfig(log *jsonlog.Logger) (*Config, error) {
 	return &config, nil
 }
 
+// Helper function to convert string to the appropriate jwt.SigningMethod
 func getSigningMethod(algorithm string) (jwt.SigningMethod, error) {
 	if algorithm == "" {
 		return nil, errors.New("JWT signing method is not set")
@@ -103,7 +104,6 @@ func getSigningMethod(algorithm string) (jwt.SigningMethod, error) {
 		return jwt.SigningMethodRS384, nil
 	case "RS512":
 		return jwt.SigningMethodRS512, nil
-
 	case "ES256":
 		return jwt.SigningMethodES256, nil
 	default:

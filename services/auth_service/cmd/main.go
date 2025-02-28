@@ -33,17 +33,17 @@ func main() {
 		return
 	}
 
-	db, err := database.New(cfg.DB)
+	db, err := database.New(cfg.DB, ctx)
 	if err != nil {
 		logger.PrintFatal(ctx, err, nil)
 		return
 	}
 	defer db.Close()
-	model := models.New(*db)
+	model := models.New(db.Pool)
 
 	userSrv := services.NewUserService(model.User)
 	tokenSrv := services.NewTokenService(cfg.JwtConfig, model.Token)
-	mailer := mailer.NewMailer(cfg.Mailer)
+	mailer := mailer.NewMailer(cfg)
 	controler := controllers.NewAuthController(logger, userSrv, tokenSrv, mailer)
 
 	server := grpc.NewGrpcServer(cfg.Grpc)

@@ -16,12 +16,12 @@ import (
 
 type TokenService struct {
 	model     *models.TokenModel
-	JwtConfig *config.JwtConfig
+	jwtConfig *config.JwtConfig
 }
 
 func NewTokenService(jwtCfg *config.JwtConfig, model *models.TokenModel) *TokenService {
 	return &TokenService{
-		JwtConfig: jwtCfg,
+		jwtConfig: jwtCfg,
 		model:     model,
 	}
 }
@@ -32,9 +32,9 @@ func (srv *TokenService) ExtractUserID(token string, expectedType string) (strin
 	}
 	secret := ""
 	if expectedType == "access" {
-		secret = srv.JwtConfig.AccessSecret
+		secret = srv.jwtConfig.AccessSecret
 	} else {
-		secret = srv.JwtConfig.RefreshSecret
+		secret = srv.jwtConfig.RefreshSecret
 	}
 	// Validate the token
 	parsedToken, err := validation.ValidateJwtToken(token, secret, expectedType)
@@ -66,14 +66,14 @@ func (srv *TokenService) GenerateJWTToken(
 	var secret []byte
 	switch tokenType {
 	case "access":
-		expiry = srv.JwtConfig.AccessExpiry
-		secret = []byte(srv.JwtConfig.AccessSecret)
+		expiry = srv.jwtConfig.AccessExpiry
+		secret = []byte(srv.jwtConfig.AccessSecret)
 	case "refresh":
-		expiry = srv.JwtConfig.RefreshExpiry
-		secret = []byte(srv.JwtConfig.RefreshSecret)
+		expiry = srv.jwtConfig.RefreshExpiry
+		secret = []byte(srv.jwtConfig.RefreshSecret)
 	case "activate":
-		expiry = srv.JwtConfig.ActivateExpiry
-		secret = []byte(srv.JwtConfig.ActivateSecret)
+		expiry = srv.jwtConfig.ActivateExpiry
+		secret = []byte(srv.jwtConfig.ActivateSecret)
 	default:
 		return "", time.Time{}, fmt.Errorf("invalid token type: %s", tokenType)
 	}
@@ -82,7 +82,7 @@ func (srv *TokenService) GenerateJWTToken(
 		"type":    tokenType,
 		"exp":     time.Now().Add(expiry).Unix(),
 	}
-	token := jwt.NewWithClaims(srv.JwtConfig.SigningMethod, claims)
+	token := jwt.NewWithClaims(srv.jwtConfig.SigningMethod, claims)
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
 		return "", time.Now(), err
@@ -90,7 +90,7 @@ func (srv *TokenService) GenerateJWTToken(
 	return tokenStr, time.Now().Add(expiry), nil
 }
 
-func (srv *TokenService) CreateResetToken(userID *uuid.UUID) (string, error) {
+func (srv *TokenService) GenerateSecureToken(userID *uuid.UUID) (string, error) {
 	randomBytes := make([]byte, 16)
 	if _, err := rand.Read(randomBytes); err != nil {
 		return "", nil
@@ -118,6 +118,6 @@ func (srv *TokenService) ValidateResetToken(tokenHash string) error {
 	return validation.ValidatePasswordResetToken(token)
 }
 
-func (srv *TokenService)DeleteAllForUser(userID uuid.UUID) error{
-    return srv.model.DeleteAllForUser(userID)
-}  
+func (srv *TokenService) DeleteAllForUser(userID uuid.UUID) error {
+	return srv.model.DeleteAllForUser(userID)
+}

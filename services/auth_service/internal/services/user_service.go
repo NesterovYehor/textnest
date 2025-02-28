@@ -19,22 +19,22 @@ func NewUserService(model *models.UserModel) *UserService {
 }
 
 // CreateNewUser creates a new user and inserts it into the database.
-func (srv *UserService) CreateNewUser(name, email, password string) (string, error) {
+func (srv *UserService) CreateNewUser(name, email, password string) (*uuid.UUID, error) {
 	newUser := &models.User{
 		Name:  name,
 		Email: email,
 	}
 
 	if err := newUser.Password.Set(password); err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	if err := validation.ValidateUser(newUser); err != nil {
-		return "", fmt.Errorf("user validation failed: %w", err)
+		return nil, fmt.Errorf("user validation failed: %w", err)
 	}
 	userID, err := srv.model.Insert(newUser)
 	if err != nil {
-		return "", srv.handleErr(err)
+		return nil, srv.handleErr(err)
 	}
 
 	return userID, nil
@@ -50,9 +50,9 @@ func (srv *UserService) AuthenticateUserByEmail(email, passwordPlaintext string)
 	if err != nil {
 		return "", srv.handleErr(err)
 	}
-    if !user.Activated{
-        return "", errors.New("User is not activated")
-    }
+	if !user.Activated {
+		return "", errors.New("User is not activated")
+	}
 
 	if !matches {
 		return "", errors.New("invalid credentials")
@@ -78,15 +78,19 @@ func (srv *UserService) ValidateUserByEmail(email string) (*uuid.UUID, error) {
 }
 
 func (srv *UserService) UserExists(userId string) (bool, error) {
-	res, err := srv.model.UserExists(userId)
+	id, err := uuid.Parse(userId)
+	if err != nil {
+		return false, err
+	}
+	res, err := srv.model.UserExists(&id)
 	if err != nil {
 		return false, srv.handleErr(err)
 	}
 	return res, nil
 }
 
-func (srv *UserService) ActivateUser(userID string) error {
-	if err := srv.model.ActivateUser(userID); err != nil {
+func (srv *UserService) ActivateUser(hash string) error {
+	if err := srv.model.ActivateUser(hash); err != nil {
 		return srv.handleErr(err)
 	}
 	return nil

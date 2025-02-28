@@ -62,7 +62,7 @@ func main() {
 	mux.Handle("DELETE /v1/pastes/expire/all", middlewares.Authenticate(handler.ExpireAllUserPastesHandler(appContext)))
 	mux.HandleFunc("POST /v1/users/signup", handler.SignUpHandler(appContext, ctx))
 	mux.HandleFunc("GET /v1/users/login", handler.LogInHandler(appContext, ctx))
-	mux.HandleFunc("GET /v1/users/activate/{id}", handler.ActivateUser(appContext))
+	mux.HandleFunc("GET /v1/users/activate/{token}", handler.ActivateUser(appContext))
 	mux.Handle("POST /v1/users/password/{token}", middlewares.Authenticate(handler.ResetPassword(appContext)))
 	mux.Handle("GET /v1/tokens/password-reset", middlewares.Authenticate(handler.SendPasswordResetEmail(appContext)))
 	mux.Handle("POST /v1/tokens/refresh", http.HandlerFunc(handler.RefreshTokens(appContext)))

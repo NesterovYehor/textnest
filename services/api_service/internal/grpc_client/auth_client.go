@@ -87,9 +87,9 @@ func (c *AuthClient) RefreshTokens(token string) (*auth.RefreshTokensResponse, e
 	return res, nil
 }
 
-func (c *AuthClient) ActivateUser(userID string) (string, error) {
+func (c *AuthClient) ActivateUser(token string) (string, error) {
 	req := auth.ActivateUserRequest{
-		UserId: userID,
+		TokenHash: token,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

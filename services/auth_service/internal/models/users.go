@@ -8,19 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrDuplicateEmail = errors.New("duplicate email")
-	ErrRecordNotFound = errors.New("record not found")
-	ErrInvalidUUID    = errors.New("invalid UUID")
-	ErrDatabaseError  = errors.New("database error")
-	ErrUpdateFailed   = errors.New("update failed")
-	ErrInsertFailed   = errors.New("insert failed")
-	ErrSelectFailed   = errors.New("select failed")
-	AnonymousUser     = &User{}
 )
 
 // User represents a user in the system.
@@ -45,48 +35,43 @@ func (user *User) IsAnonymous() bool {
 
 // UserModel represents the user model.
 type UserModel struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewUserModel(db *sql.DB) *UserModel {
-	return &UserModel{db: db}
+func NewUserModel(pool *pgxpool.Pool) *UserModel {
+	return &UserModel{pool: pool}
 }
 
-func (model *UserModel) Insert(user *User) (string, error) {
+func (model *UserModel) Insert(user *User) (*uuid.UUID, error) {
 	query := `
-		INSERT INTO users (name, email, password_hash)
-		VALUES ($1, $2, $3)
-		RETURNING id
-	`
-
+        INSERT INTO users (name, email, password_hash)
+        VALUES ($1, $2, $3)
+        RETURNING id
+    `
 	args := []any{user.Name, user.Email, user.Password.Hash}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	err := model.db.QueryRowContext(ctx, query, args...).Scan(&user.ID)
-
-	if pqErr, ok := err.(*pq.Error); ok {
-		if pqErr.Code == "23505" { // Unique violation code
-			return "", ErrDuplicateEmail
+	err := model.pool.QueryRow(ctx, query, args...).Scan(&user.ID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, ErrDuplicateEmail
 		}
+		return nil, fmt.Errorf("%w: %v", ErrInsertFailed, err)
 	}
-	return user.ID.String(), nil
+	return &user.ID, nil
 }
 
-func (model *UserModel) UserExists(userId string) (bool, error) {
+func (model *UserModel) UserExists(userId *uuid.UUID) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	id, err := uuid.Parse(userId)
-	if err != nil {
-		return false, ErrInvalidUUID
-	}
-
 	var exists bool
-	err = model.db.QueryRowContext(ctx, query, id).Scan(&exists)
+	err := model.pool.QueryRow(ctx, query, userId).Scan(&exists)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, ErrRecordNotFound
@@ -108,7 +93,7 @@ func (model *UserModel) GetByEmail(email string) (*User, error) {
 	defer cancel()
 
 	var user User
-	err := model.db.QueryRowContext(ctx, query, email).Scan(
+	err := model.pool.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.CreatedAt,
 		&user.Name,
@@ -122,34 +107,29 @@ func (model *UserModel) GetByEmail(email string) (*User, error) {
 		}
 		return nil, fmt.Errorf("%w: %v", ErrSelectFailed, err)
 	}
-
 	return &user, nil
 }
 
-func (m *UserModel) ActivateUser(userID string) error {
+func (m *UserModel) ActivateUser(hash string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	query := `
-        UPDATE users SET activated = true 
-        WHERE id = $1 AND activated = false
+        UPDATE users
+        SET activated = true
+        FROM tokens
+        WHERE users.id = tokens.user_id
+        AND tokens.hash = $1
+        AND tokens.expiry > NOW();
+
     `
 
-	id, err := uuid.Parse(userID)
-	if err != nil {
-		return ErrInvalidUUID
-	}
-
-	res, err := m.db.ExecContext(ctx, query, id)
+	res, err := m.pool.Exec(ctx, query, hash)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrUpdateFailed, err)
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDatabaseError, err)
-	}
-
+	rowsAffected := res.RowsAffected()
 	if rowsAffected == 0 {
 		return ErrRecordNotFound
 	}
@@ -181,20 +161,18 @@ func (m *UserModel) ResetPassword(plainText, tokenHash string) (*uuid.UUID, erro
 		tokenHash,
 	}
 
-	err = m.db.QueryRowContext(ctx, query, args...).Scan(&user.ID)
+	err = m.pool.QueryRow(ctx, query, args...).Scan(&user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRecordNotFound
-		} else {
-			return nil, err
 		}
+		return nil, fmt.Errorf("%w: %v", ErrSelectFailed, err)
 	}
-	return &user.ID, nil
+	return nil, fmt.Errorf("%w: %v", ErrSelectFailed, err)
 }
 
-// Set hashes and sets the password.
 func (password *password) Set(plaintext string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(plaintext), 12)
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintext), 10)
 	if err != nil {
 		return err
 	}

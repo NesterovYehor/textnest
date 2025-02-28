@@ -1,7 +1,7 @@
 {{define "subject"}}Welcome to Txtnest!{{end}}
 {{define "plainBody"}} Hi,
 Thanks for signing up for a Txtnest account. We're excited to have you on board! 
-Please send a use this url `http://localhost:50051/v1/users/activate/{{.userID}}` to activate your account
+Please send a use this url `http://localhost:50051/v1/users/activate/{{.token}}` to activate your account
 Please note that this is a one-time use token and it will expire in 1 day.
 Thanks,
 The Txtnest Team {{end}}
@@ -14,7 +14,7 @@ The Txtnest Team {{end}}
 <body>
   <p>Hi,</p>
   <p>Thanks for signing up for a Txtnest account. We're excited to have you on board!</p>
-  <p>Please use this <code>http://localhost:50051/v1/users/activate/{{.userID}}</code> to activate your account:</p>
+  <p>Please use this <code>http://localhost:50051/v1/users/activate/{{.token}}</code> to activate your account:</p>
   <p>Please note that this is a one-time use token and it will expire in 1 day.</p>
   <p>Thanks,</p>
   <p>The Txtnest Team</p>
