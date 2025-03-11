@@ -102,7 +102,6 @@ docker-compose up -d
 - **Admin Dashboard** – For advanced management and monitoring.  
 - **Public & Private Snippets** – More control over who sees what.  
 
-For the **CLI/SSH tool**, check out: [txtnest-cli](https://github.com/NesterovYehor/txtnest-cli).
 
 ---
 
